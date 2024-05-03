@@ -1,6 +1,6 @@
 {
   "name": "code-migration-helpers",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Provides useful (but currently not thorough) code migration helpers",
   "author": {
     "email": "ywordk@gmail.com",

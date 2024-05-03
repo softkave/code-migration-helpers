@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {Dirent} from 'fs-extra';
+import type {Dirent} from 'fs-extra';
 import path from 'path';
 import {
   kJSExtractImportFromRegex,

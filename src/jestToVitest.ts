@@ -1,5 +1,5 @@
 import assert from 'assert';
-import pkgFsExtra, {Dirent} from 'fs-extra';
+import type {Dirent} from 'fs-extra';
 import {
   kJSHasVitestImportRegex,
   kJestFnMockSignature,
@@ -21,7 +21,8 @@ import {
   traverseAndProcessTSFilesInTree,
 } from './utils.js';
 
-const {writeFile, readdir} = pkgFsExtra;
+// TODO: we should implement this using the Typscript SDK or take a look at the
+// implementation of Prettier
 
 function findLastImportPartIndex(parts: string[]) {
   for (let i = 0; i < parts.length; i++) {
@@ -76,6 +77,27 @@ function replacteJestFnMockFrom(f: ProcessedFile) {
   return true;
 }
 
+function checkPartsIncludes(parts: string[], checks: string[]) {
+  const found: string[] = [];
+
+  for (const part of parts) {
+    if (!checks.length) {
+      break;
+    }
+
+    const foundCheckIndex = checks.findIndex(checkFor => {
+      return part.includes(checkFor);
+    });
+
+    if (foundCheckIndex !== -1) {
+      found.push(checks[foundCheckIndex]);
+      checks.splice(foundCheckIndex, 1);
+    }
+  }
+
+  return found;
+}
+
 function importVitest(f: ProcessedFile, shouldImportVi: boolean) {
   assert(f.outcome === kProcessedFileOutcome.processed);
   const existinVitestImportIndex = findExistingVitestImportPartIndex(
@@ -97,11 +119,23 @@ function importVitest(f: ProcessedFile, shouldImportVi: boolean) {
     );
   }
 
-  const partsToInsert = [
-    shouldImportVi
-      ? "import {test, describe, vi} from 'vitest';"
-      : "import {test, describe} from 'vitest';",
+  const checks = [
+    'test',
+    'describe',
+    'expect',
+    'beforeAll',
+    'beforeEach',
+    'afterEach',
+    'afterAll',
   ];
+  const foundChecks = checkPartsIncludes(f.workingParts, checks);
+
+  if (shouldImportVi) {
+    foundChecks.push('vi');
+  }
+
+  const importFollowing = foundChecks.join(', ');
+  const partsToInsert = [`import {${importFollowing}} from 'vitest';`];
 
   if (lastCommentPartIndex !== -1) {
     // There are no imports in file so add a newline between comment and import,

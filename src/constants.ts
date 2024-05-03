@@ -1,5 +1,4 @@
 export const kJSExtractImportFromRegex = /.+from '(.+)';$/;
-export const kJSEndCommentRegex = /(?:\/\/|*\/)/;
 export const kJSSingleLineCommentStart = '//';
 export const kJSMultilineCommentEnd = '*/';
 export const kJSHasVitestImportRegex = /from ['"]{1}vitest['"]{1}/;

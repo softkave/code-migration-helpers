@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {readFile, readdir, stat, writeFile} from 'fs-extra';
+import fsExtra from 'fs-extra';
 import path from 'path';
 import {
   kJSExtractImportFromRegex,
@@ -29,7 +29,7 @@ export function isCommentEnd(part: string) {
 export async function startProcessedFile(
   filepath: string
 ): Promise<ProcessedFile> {
-  const raw = await readFile(filepath, 'utf-8');
+  const raw = await fsExtra.readFile(filepath, 'utf-8');
   const parts = raw.split(kNewlineChar);
 
   return {
@@ -95,7 +95,7 @@ export async function writeProcessedFile(f: ProcessedFile) {
   }
 
   const raw = f.workingParts.join(kNewlineChar);
-  await writeFile(f.filepath, raw);
+  await fsExtra.writeFile(f.filepath, raw);
 }
 
 export function isTSFilepath(filepath: string) {
@@ -110,7 +110,7 @@ export async function traverseAndProcessTSFilesInTree(
   // memory's sake
 
   let fList: ProcessedFile[] = [];
-  const dirList = await readdir(folderpath, {withFileTypes: true});
+  const dirList = await fsExtra.readdir(folderpath, {withFileTypes: true});
 
   await Promise.all(
     dirList.map(async entry => {
@@ -176,7 +176,7 @@ export async function logProcessedFiles(fList: ProcessedFile[]) {
 
 export async function isFile(filepath: string) {
   try {
-    const info = await stat(filepath);
+    const info = await fsExtra.stat(filepath);
     return info.isFile();
   } catch (error: unknown) {
     // console.error(error);
