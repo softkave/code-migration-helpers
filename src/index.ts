@@ -1,6 +1,6 @@
 import assert from 'assert';
-import {addJsExtCmd} from './addJsExtension.js';
-import {jestToVitestCmd} from './jestToVitest.js';
+import {addJsExtCmd} from './addJsExt.js';
+import {addVitestToTestCmd} from './addVitestToTests.js';
 import {ProcessCmdType, kProcessCmdType} from './types.js';
 
 async function main() {
@@ -19,7 +19,7 @@ async function main() {
       break;
 
     case kProcessCmdType.jestToVitest:
-      await jestToVitestCmd(folderpath);
+      await addVitestToTestCmd(folderpath);
       break;
   }
 }

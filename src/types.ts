@@ -42,6 +42,10 @@ export type FileTreeTraverseHandler = (
   entryPath: string
 ) => Promise<ProcessedFile | undefined>;
 
+export type TraverseAndProcessFileHandler = (
+  entryPath: string
+) => Promise<boolean>;
+
 export const kProcessCmdType = {
   addJsExt: 'add-js-ext',
   jestToVitest: 'jest-to-vitest',

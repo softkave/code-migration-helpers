@@ -1,11 +1,25 @@
-export const kJSExtractImportFromRegex = /.+from '(.+)';$/;
-export const kJSSingleLineCommentStart = '//';
-export const kJSMultilineCommentEnd = '*/';
-export const kJSHasVitestImportRegex = /from ['"]{1}vitest['"]{1}/;
-export const kTSTestFilepathEnding = '.test.ts';
-export const kJestFnMockSignature = 'jest.fn';
-export const kViFnMockSignature = 'vi.fn';
-export const kNewlineChar = '\n';
+export const kJest = 'jest';
+export const kVi = 'vi';
+export const kVitest = 'vitest';
 export const kJSRelativeImportRegex = /^\.{1,2}/;
-export const kJSHasEndingJsRegex = /\.[mc]*js$/;
-export const kTSFilepathRegex = /\.[mc]*ts$/;
+export const kJSOrTSFilepathRegex = /\.(?:ts|js|mjs|mts|cjs|cts)$/;
+export const kJSOrTSTestFilepathRegex =
+  /\.(?:test|spec)\.(?:ts|js|mjs|mts|cjs|cts)$/;
+export const kJSQuoteGlobalRegex = /["']/g;
+export const kTSExtension = '.ts';
+export const kJSExtension = '.js';
+export const kIndex = 'index';
+export const kPosixFolderSeparator = '/';
+export const kExpectedTestConstructs = [
+  'test',
+  'describe',
+  'expect',
+  'beforeAll',
+  'beforeEach',
+  'afterEach',
+  'afterAll',
+];
+export const kNewline = '\n';
+export const kWhitespaceRegex = /[\s]+/;
+export const kSemicolonRegex = /[;]+/;
+export const kSemicolon = ';';
