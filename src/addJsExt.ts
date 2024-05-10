@@ -10,44 +10,66 @@ import {
 } from './constants.js';
 import {TraverseAndProcessFileHandler} from './types.js';
 import {
+  getDirAndBasename,
   getImportText,
   isFileOrFolder,
+  isJSOrTSFilepath,
   isRelativeImportText,
   replaceNodeText,
   traverseAndProcessFilesInFolderpath,
 } from './utils.js';
 
-export async function decideExtension(dir: string, importText: string) {
-  const possibleFilepaths = {
-    js: path.normalize(path.join(dir, importText + kJSExtension)),
-    ts: path.normalize(path.join(dir, importText + kTSExtension)),
-  };
-  const possibleFolderpaths = {
-    indexJS: path.normalize(
-      path.join(dir, importText + kPosixFolderSeparator + kIndex + kJSExtension)
-    ),
-    indexTS: path.normalize(
-      path.join(dir, importText + kPosixFolderSeparator + kIndex + kTSExtension)
-    ),
-  };
+export async function getImportTextWithExt(
+  dir: string,
+  originalImportText: string,
+  ext = kJSExtension,
+  checkExts = [kJSExtension, kTSExtension]
+) {
+  let importTextWithoutExt: string | undefined;
+
+  if (isJSOrTSFilepath(originalImportText)) {
+    importTextWithoutExt = getDirAndBasename(originalImportText);
+  } else {
+    importTextWithoutExt = originalImportText;
+  }
+
+  if (!importTextWithoutExt) {
+    return;
+  }
+
+  const possibleFilepaths = checkExts.map(checkExt =>
+    path.normalize(path.join(dir, importTextWithoutExt + checkExt))
+  );
+  const possibleFolderpaths = checkExts.map(checkExt =>
+    path.normalize(
+      path.join(
+        dir,
+        importTextWithoutExt + kPosixFolderSeparator + kIndex + checkExt
+      )
+    )
+  );
 
   const resolvePossibleFolderpath = async (p: string) => {
     return (await isFileOrFolder(p)) === 'file' ? 'folder' : undefined;
   };
 
   const possibleImportTypes = await Promise.all([
-    isFileOrFolder(possibleFilepaths.js),
-    isFileOrFolder(possibleFilepaths.ts),
-    resolvePossibleFolderpath(possibleFolderpaths.indexJS),
-    resolvePossibleFolderpath(possibleFolderpaths.indexTS),
+    ...possibleFilepaths.map(p => isFileOrFolder(p)),
+    ...possibleFolderpaths.map(p => resolvePossibleFolderpath(p)),
   ]);
   const importType = possibleImportTypes.find(item => !!item);
+  const ending =
+    importType === 'file'
+      ? ext
+      : importType === 'folder'
+        ? kPosixFolderSeparator + kIndex + ext
+        : undefined;
 
-  return importType === 'file'
-    ? kJSExtension
-    : importType === 'folder'
-      ? kPosixFolderSeparator + kIndex + kJSExtension
-      : undefined;
+  if (!ending) {
+    return;
+  }
+
+  return importTextWithoutExt + ending;
 }
 
 function determineQuoteTypeFromModuleSpecifier(
@@ -85,17 +107,22 @@ async function addJsExtToRelativeImportsInFilepath(filepath: string) {
   await Promise.all(
     importAndExportNodes.map(async node => {
       assert(node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier));
-      const importText = getImportText(node.moduleSpecifier, sourceFile);
-      const extension = await decideExtension(parsedFilepath.dir, importText);
+      const originalImportText = getImportText(
+        node.moduleSpecifier,
+        sourceFile
+      );
+      const changedImportText = await getImportTextWithExt(
+        parsedFilepath.dir,
+        originalImportText
+      );
       let replacementText = '';
 
-      if (extension) {
+      if (changedImportText) {
         const quotationType = determineQuoteTypeFromModuleSpecifier(
           sourceFile,
           node.moduleSpecifier
         );
-        replacementText =
-          quotationType + importText + extension + quotationType;
+        replacementText = quotationType + changedImportText + quotationType;
       }
 
       replacementTextList.push(replacementText);
@@ -126,6 +153,10 @@ async function addJsExtToRelativeImportsInFilepath(filepath: string) {
 export const addJsExtTraverseHandler: TraverseAndProcessFileHandler = async (
   filepath: string
 ) => {
+  if (!isJSOrTSFilepath(filepath)) {
+    return false;
+  }
+
   return await addJsExtToRelativeImportsInFilepath(filepath);
 };
 

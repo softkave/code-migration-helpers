@@ -2,12 +2,12 @@ import {ensureDir, ensureFile, remove} from 'fs-extra/esm';
 import {readFile, writeFile} from 'fs/promises';
 import path from 'path';
 import {afterEach, assert, beforeEach, describe, expect, test} from 'vitest';
-import {addJsExtTraverseHandler, decideExtension} from '../addJsExt.js';
+import {addJsExtTraverseHandler, getImportTextWithExt} from '../addJsExt.js';
 import {
+  kExtensions,
   kIndex,
-  kJSExtension,
+  kMTSExtension,
   kPosixFolderSeparator,
-  kTSExtension,
 } from '../constants.js';
 
 const kTestLocalFsDir = './testdir';
@@ -22,179 +22,80 @@ afterEach(async () => {
   await remove(testDir);
 });
 
-describe('decideExtension', () => {
-  describe('in folder', () => {
-    test('js file in folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const filename = './js-file';
-      const filepath = path.join(dir, filename + kJSExtension);
+describe('getImportTextWithExt', () => {
+  test('getImportTextWithExt', async () => {
+    const dir = path.join(testDir, 'parent', 'wdir');
+    const filepaths = {
+      fileInFolder: './file',
+      fileWithExistingExt: './file-with-ext',
+      fileInChildFolder: './child-folder/file',
+      fileInParentFolder: '../file',
+      fileInParentFolderDepth02: '../depth02/file',
+    };
+    const indexPaths = {
+      indexInChildFolder: './child',
+      indexInParentFolder: '..',
+      indexInParentFolderDepth02: '../depth02',
+    };
+    const filepathList = Object.values(filepaths);
+    const indexPathList = Object.values(indexPaths);
+
+    async function checkOnFilepath(
+      importText: string,
+      filepath: string,
+      ext: string,
+      endingText: string
+    ) {
       await ensureFile(filepath);
+      const modifiedImportText = await getImportTextWithExt(
+        dir,
+        importText,
+        ext,
+        /** checkExts */ [ext]
+      );
+      expect(modifiedImportText).toBe(endingText);
+      await remove(filepath);
+    }
 
-      const extension = await decideExtension(dir, filename);
+    for (const ext of kExtensions) {
+      // file
+      for (const importText of filepathList) {
+        const filepath = path.join(dir, importText + ext);
+        await checkOnFilepath(importText, filepath, ext, importText + ext);
+      }
 
-      expect(extension).toBe(kJSExtension);
-    });
+      // import folder index
+      for (const importText of indexPathList) {
+        const filepath = path.join(
+          dir,
+          importText + kPosixFolderSeparator + kIndex + ext
+        );
+        await checkOnFilepath(
+          importText,
+          filepath,
+          ext,
+          importText + kPosixFolderSeparator + kIndex + ext
+        );
+      }
 
-    test('ts file in folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const filename = './ts-file';
-      const filepath = path.join(dir, filename + kTSExtension);
-      await ensureFile(filepath);
+      // import .test file
+      for (let importText of filepathList) {
+        importText = importText + '.test';
+        const filepath = path.join(dir, importText + ext);
+        await checkOnFilepath(importText, filepath, ext, importText + ext);
+      }
 
-      const extension = await decideExtension(dir, filename);
-
-      expect(extension).toBe(kJSExtension);
-    });
-  });
-
-  describe('in child folder', () => {
-    test('js file in child folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const filename = './js-child-folder/js-file';
-      const filepath = path.join(dir, filename + kJSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, filename);
-
-      expect(extension).toBe(kJSExtension);
-    });
-
-    test('ts file in child folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const filename = './ts-child-folder/ts-file';
-      const filepath = path.join(dir, filename + kTSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, filename);
-
-      expect(extension).toBe(kJSExtension);
-    });
-  });
-
-  describe('in parent folder', () => {
-    test('js file in parent folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const filename = '../js-file';
-      const filepath = path.join(dir, filename + kJSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, filename);
-
-      expect(extension).toBe(kJSExtension);
-    });
-
-    test('ts file in parent folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const filename = '../ts-file';
-      const filepath = path.join(dir, filename + kTSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, filename);
-
-      expect(extension).toBe(kJSExtension);
-    });
-  });
-
-  describe('in parent folder depth01', () => {
-    test('js file in parent folder depth 02', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const filename = '../js-depth02/js-file';
-      const filepath = path.join(dir, filename + kJSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, filename);
-
-      expect(extension).toBe(kJSExtension);
-    });
-
-    test('ts file in child folder depth 02', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const filename = '../ts-depth02/ts-file';
-      const filepath = path.join(dir, filename + kTSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, filename);
-
-      expect(extension).toBe(kJSExtension);
-    });
-  });
-
-  describe('index in child folder', () => {
-    test('js index file in child folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const foldername = './js-child';
-      const filename = foldername + '/index';
-      const filepath = path.join(dir, filename + kJSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, foldername);
-
-      expect(extension).toBe(kPosixFolderSeparator + kIndex + kJSExtension);
-    });
-
-    test('ts index file in child folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const foldername = './ts-child';
-      const filename = foldername + '/index';
-      const filepath = path.join(dir, filename + kTSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, foldername);
-
-      expect(extension).toBe(kPosixFolderSeparator + kIndex + kJSExtension);
-    });
-  });
-
-  describe('index in parent folder', () => {
-    test('js index file in parent folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const foldername = '..';
-      const filename = foldername + '/index';
-      const filepath = path.join(dir, filename + kJSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, foldername);
-
-      expect(extension).toBe(kPosixFolderSeparator + kIndex + kJSExtension);
-    });
-
-    test('ts index file in parent folder', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const foldername = '..';
-      const filename = foldername + '/index';
-      const filepath = path.join(dir, filename + kTSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, foldername);
-
-      expect(extension).toBe(kPosixFolderSeparator + kIndex + kJSExtension);
-    });
-  });
-
-  describe('index in parent folder depth02', () => {
-    test('js index file in parent folder depth02', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const foldername = '../js-depth02';
-      const filename = foldername + '/index';
-      const filepath = path.join(dir, filename + kJSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, foldername);
-
-      expect(extension).toBe(kPosixFolderSeparator + kIndex + kJSExtension);
-    });
-
-    test('ts index file in parent folder depth02', async () => {
-      const dir = path.join(testDir, 'parent', 'wdir');
-      const foldername = '../ts-depth02';
-      const filename = foldername + '/index';
-      const filepath = path.join(dir, filename + kTSExtension);
-      await ensureFile(filepath);
-
-      const extension = await decideExtension(dir, foldername);
-
-      expect(extension).toBe(kPosixFolderSeparator + kIndex + kJSExtension);
-    });
+      // file with existing ext
+      for (const importText of filepathList) {
+        const filepath = path.join(dir, importText + ext);
+        await checkOnFilepath(
+          importText + kMTSExtension,
+          filepath,
+          ext,
+          importText + ext
+        );
+      }
+    }
   });
 });
 

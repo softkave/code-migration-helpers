@@ -1,6 +1,6 @@
 {
   "name": "code-migration-helpers",
-  "version": "0.4.0",
+  "version": "0.5.1",
   "description": "Provides useful (but currently not thorough) code migration helpers",
   "author": {
     "email": "ywordk@gmail.com",
@@ -22,39 +22,38 @@
   "exports": {
     ".": null
   },
-  "bin": "build/src/index.js",
+  "bin": "bin/src/index.js",
   "files": [
-    "build/src/{*.js,**/*.js}",
-    "build/src/{*.js.map,**/*.js.map}",
-    "build/src/{*.d.ts,**/*.d.ts}",
-    "!build/src/**/__tests__/**/*"
+    "bin/src/{*.js,**/*.cjs}"
   ],
   "scripts": {
     "test": "vitest --config ./vitest.config.ts",
     "lint": "gts lint",
     "clean": "gts clean",
     "compile": "tsc",
+    "compile-bin": "tsc --project tsconfig-bin.json",
     "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
     "posttest": "npm run lint",
-    "start": "node ./build/src/index.js",
+    "start": "node ./bin/src/index.cjs",
     "check-circular-deps": "npx dpdm --no-warning --no-tree ./src/index.ts",
     "publish-to-npm": "npm run compile && npm publish",
     "show-packlist": "npm run compile && npm pack --dry-run"
   },
   "engines": {
-    "node": ">=13"
+    "node": ">=18"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/node": "20.11.5",
     "gts": "^5.3.0",
-    "typescript": "~5.4.3",
     "vitest": "^1.5.3"
   },
   "dependencies": {
+    "commander": "^12.0.0",
     "fs-extra": "^11.2.0",
-    "type-fest": "^4.18.0"
+    "type-fest": "^4.18.0",
+    "typescript": "~5.4.3"
   }
 }

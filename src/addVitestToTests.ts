@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {writeFile} from 'fs-extra';
+import {writeFile} from 'fs/promises';
 import * as ts from 'typescript';
 import {
   kExpectedTestConstructs,

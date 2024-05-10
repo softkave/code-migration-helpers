@@ -14,35 +14,35 @@ A collection of useful code migration scripts, currently supporting the followin
 ### `npm`
 
 ```sh
-npm install code-migration-helper -D
+npm install code-migration-helpers -D
 ```
 
 ### `npm` one time run
 
 ```sh
-npx code-migration-helper
+npx code-migration-helpers
 ```
 
 ### `yarn`
 
 ```sh
-yarn add code-migration-helper -D
+yarn add code-migration-helpers -D
 ```
 
 ## Usage
 
 ### Add JS extenstion to relative imports
 
-With `code-migration-helper`, you can add `.js` extension to relative imports in all Typescript files in a supplied folder path. To do that, run the following, replacing `../folder/path` with your intended folder's path. **Also, look at, and follow the advice in the NOTE above before running.**
+With `code-migration-helpers`, you can add `.js` extension to relative imports in all Typescript files in a supplied folder path. To do that, run the following, replacing `../folder/path` with your intended folder's path. **Also, look at, and follow the advice in the NOTE above before running.**
 
 ```sh
-code-migration-helper add-js-ext ../folder/path
+code-migration-helpers add-js-ext ../folder/path
 ```
 
 ### `jest` to `vitest`
 
-With `code-migration-helper`, you can import `test` and `describe` functions, and replace `jest.fn()` mock functions with `vi.fn()` in all Typescript files in a supplied folder path. To do that, run the following, replacing `../folder/path` with your intended folder's path. **Also, look at, and follow the advice in the NOTE above before running.**
+With `code-migration-helpers`, you can import `test` and `describe` functions, and replace `jest.fn()` mock functions with `vi.fn()` in all Typescript files in a supplied folder path. To do that, run the following, replacing `../folder/path` with your intended folder's path. **Also, look at, and follow the advice in the NOTE above before running.**
 
 ```sh
-code-migration-helper jest-to-vitest ../folder/path
+code-migration-helpers jest-to-vitest ../folder/path
 ```

@@ -2,6 +2,8 @@ import fsExtra from 'fs-extra';
 import path from 'path';
 import ts from 'typescript';
 import {
+  kCaptureDirAndBasenameFromJSOrTSFilepathRegex,
+  kDTSExtension,
   kJSOrTSFilepathRegex,
   kJSOrTSTestFilepathRegex,
   kJSQuoteGlobalRegex,
@@ -17,6 +19,20 @@ export function isJSOrTSTestFilepath(filepath: string) {
   return kJSOrTSTestFilepathRegex.test(filepath);
 }
 
+export function isTSDeclarationFilepath(filepath: string) {
+  return filepath.endsWith(kDTSExtension);
+}
+
+export function getDirAndBasename(filepath: string) {
+  const matches = kCaptureDirAndBasenameFromJSOrTSFilepathRegex.exec(filepath);
+
+  if (matches) {
+    return matches.groups?.dirAndBasename;
+  }
+
+  return undefined;
+}
+
 export async function traverseAndProcessFilesInFolderpath(
   folderpath: string,
   handleFile: TraverseAndProcessFileHandler
@@ -30,7 +46,7 @@ export async function traverseAndProcessFilesInFolderpath(
       try {
         if (entry.isDirectory()) {
           await traverseAndProcessFilesInFolderpath(entryPath, handleFile);
-        } else if (entry.isFile() && isJSOrTSFilepath(entryPath)) {
+        } else if (entry.isFile()) {
           const modifiedFile = await handleFile(entryPath);
 
           if (modifiedFile) {

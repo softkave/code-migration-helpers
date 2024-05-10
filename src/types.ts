@@ -47,8 +47,9 @@ export type TraverseAndProcessFileHandler = (
 ) => Promise<boolean>;
 
 export const kProcessCmdType = {
-  addJsExt: 'add-js-ext',
+  addExtToImports: 'add-ext-to-imports',
   jestToVitest: 'jest-to-vitest',
+  renameExt: 'rename-ext',
 } as const;
 
 export type ProcessCmdType = ValueOf<typeof kProcessCmdType>;
