@@ -2,7 +2,7 @@ import {ensureDir, ensureFile, remove} from 'fs-extra/esm';
 import {readFile, writeFile} from 'fs/promises';
 import path from 'path';
 import {afterEach, assert, beforeEach, describe, expect, test} from 'vitest';
-import {addJsExtTraverseHandler, getImportTextWithExt} from '../addJsExt.js';
+import {addExtTraverseHandler, getImportTextWithExt} from '../addExt.js';
 import {
   kExtensions,
   kIndex,
@@ -99,8 +99,8 @@ describe('getImportTextWithExt', () => {
   });
 });
 
-describe('addJsExtTraverseHandler', () => {
-  test('addJsExtTraverseHandler', async () => {
+describe('addExtTraverseHandler', () => {
+  test('addExtTraverseHandler', async () => {
     const dir = path.join(testDir, 'addExt', 'wdir');
     const filepath = path.join(dir, 'main.ts');
     const importFromFilepath = path.join(dir, 'importFromFile.ts');
@@ -137,7 +137,7 @@ const str: string = "str";
       ensureFile(importFromOuterFolderIndexFilepath),
     ]);
 
-    await addJsExtTraverseHandler(filepath);
+    await addExtTraverseHandler(filepath);
 
     const actualCode = await readFile(filepath, 'utf-8');
     const expectedCode = `

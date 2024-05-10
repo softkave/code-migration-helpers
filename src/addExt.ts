@@ -2,12 +2,7 @@ import assert from 'assert';
 import {writeFile} from 'fs/promises';
 import path from 'path';
 import * as ts from 'typescript';
-import {
-  kIndex,
-  kJSExtension,
-  kPosixFolderSeparator,
-  kTSExtension,
-} from './constants.js';
+import {kIndex, kPosixFolderSeparator} from './constants.js';
 import {TraverseAndProcessFileHandler} from './types.js';
 import {
   getDirAndBasename,
@@ -19,11 +14,16 @@ import {
   traverseAndProcessFilesInFolderpath,
 } from './utils.js';
 
+export interface AddExtOpts {
+  from?: string;
+  to?: string;
+}
+
 export async function getImportTextWithExt(
   dir: string,
   originalImportText: string,
-  ext = kJSExtension,
-  checkExts = [kJSExtension, kTSExtension]
+  ext: string,
+  checkExts: string[]
 ) {
   let importTextWithoutExt: string | undefined;
 
@@ -79,7 +79,10 @@ function determineQuoteTypeFromModuleSpecifier(
   return node.getText(sourceFile).startsWith("'") ? "'" : '"';
 }
 
-async function addJsExtToRelativeImportsInFilepath(filepath: string) {
+async function addExtToRelativeImportsInFilepath(
+  filepath: string,
+  opts: AddExtOpts
+) {
   const program = ts.createProgram([filepath], {allowJs: true});
   const sourceFile = program.getSourceFile(filepath);
   assert(sourceFile);
@@ -150,19 +153,20 @@ async function addJsExtToRelativeImportsInFilepath(filepath: string) {
   return true;
 }
 
-export const addJsExtTraverseHandler: TraverseAndProcessFileHandler = async (
-  filepath: string
-) => {
+export const addExtTraverseHandler: TraverseAndProcessFileHandler<
+  [AddExtOpts]
+> = async (filepath: string, opts: AddExtOpts) => {
   if (!isJSOrTSFilepath(filepath)) {
     return false;
   }
 
-  return await addJsExtToRelativeImportsInFilepath(filepath);
+  return await addExtToRelativeImportsInFilepath(filepath, opts);
 };
 
-export async function addJsExtCmd(folderpath: string) {
+export async function addExtCmd(folderpath: string, opts: AddExtOpts) {
   await traverseAndProcessFilesInFolderpath(
     folderpath,
-    addJsExtTraverseHandler
+    addExtTraverseHandler,
+    opts
   );
 }

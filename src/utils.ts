@@ -33,9 +33,12 @@ export function getDirAndBasename(filepath: string) {
   return undefined;
 }
 
-export async function traverseAndProcessFilesInFolderpath(
+export async function traverseAndProcessFilesInFolderpath<
+  TArgs extends unknown[],
+>(
   folderpath: string,
-  handleFile: TraverseAndProcessFileHandler
+  handleFile: TraverseAndProcessFileHandler<TArgs>,
+  ...args: TArgs
 ) {
   const dirList = await fsExtra.readdir(folderpath, {withFileTypes: true});
 
@@ -45,9 +48,13 @@ export async function traverseAndProcessFilesInFolderpath(
 
       try {
         if (entry.isDirectory()) {
-          await traverseAndProcessFilesInFolderpath(entryPath, handleFile);
+          await traverseAndProcessFilesInFolderpath(
+            entryPath,
+            handleFile,
+            ...args
+          );
         } else if (entry.isFile()) {
-          const modifiedFile = await handleFile(entryPath);
+          const modifiedFile = await handleFile(entryPath, ...args);
 
           if (modifiedFile) {
             console.log(`modified ${entryPath}`);

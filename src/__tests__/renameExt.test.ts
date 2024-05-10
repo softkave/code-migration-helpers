@@ -10,7 +10,7 @@ import {
   kMTSExtension,
   kTSExtension,
 } from '../constants.js';
-import {renameToCommonJsTraverseHandler} from '../renameToCommonJs.js';
+import {renameExtTraverseHandler} from '../renameExt.js';
 
 const kTestLocalFsDir = './testdir';
 const testDir = path.join(kTestLocalFsDir + '/' + Date.now());
@@ -24,8 +24,8 @@ afterEach(async () => {
   await remove(testDir);
 });
 
-describe('renameToCommonJs', () => {
-  test('renameToCommonJsTraverseHandler for .js & .ts', async () => {
+describe('renameExt', () => {
+  test('renameExtTraverseHandler for .js & .ts', async () => {
     const filename = Date.now();
     const paths = {
       ts: path.join(testDir, filename + kTSExtension),
@@ -36,8 +36,8 @@ describe('renameToCommonJs', () => {
     await Promise.all([ensureFile(paths.ts), ensureFile(paths.js)]);
 
     await Promise.all([
-      renameToCommonJsTraverseHandler(paths.ts),
-      renameToCommonJsTraverseHandler(paths.js),
+      renameExtTraverseHandler(paths.ts),
+      renameExtTraverseHandler(paths.js),
     ]);
 
     const [ctsExists, cjsExists, tsExists, jsExists] = await Promise.all([
@@ -52,7 +52,7 @@ describe('renameToCommonJs', () => {
     expect(jsExists).toBeFalsy();
   });
 
-  test('renameToCommonJsTraverseHandler not .js or .ts or .d.ts', async () => {
+  test('renameExtTraverseHandler not .js or .ts or .d.ts', async () => {
     const filename = Date.now();
     const paths = {
       mts: path.join(testDir, filename + kMTSExtension),
@@ -70,11 +70,11 @@ describe('renameToCommonJs', () => {
     ]);
 
     await Promise.all([
-      renameToCommonJsTraverseHandler(paths.mts),
-      renameToCommonJsTraverseHandler(paths.mjs),
-      renameToCommonJsTraverseHandler(paths.cts),
-      renameToCommonJsTraverseHandler(paths.cjs),
-      renameToCommonJsTraverseHandler(paths.dts),
+      renameExtTraverseHandler(paths.mts),
+      renameExtTraverseHandler(paths.mjs),
+      renameExtTraverseHandler(paths.cts),
+      renameExtTraverseHandler(paths.cjs),
+      renameExtTraverseHandler(paths.dts),
     ]);
 
     const [mtsExists, mjsExists, ctsExists, cjsExists, dtsExists] =

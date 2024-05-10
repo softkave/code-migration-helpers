@@ -42,8 +42,9 @@ export type FileTreeTraverseHandler = (
   entryPath: string
 ) => Promise<ProcessedFile | undefined>;
 
-export type TraverseAndProcessFileHandler = (
-  entryPath: string
+export type TraverseAndProcessFileHandler<TArgs extends unknown[]> = (
+  entryPath: string,
+  ...args: TArgs
 ) => Promise<boolean>;
 
 export const kProcessCmdType = {
