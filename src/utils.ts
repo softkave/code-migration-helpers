@@ -3,9 +3,7 @@ import path from 'path';
 import ts from 'typescript';
 import {
   kCaptureDirAndBasenameFromJSOrTSFilepathRegex,
-  kDTSExtension,
   kJSOrTSFilepathRegex,
-  kJSOrTSTestFilepathRegex,
   kJSQuoteGlobalRegex,
   kJSRelativeImportRegex,
 } from './constants.js';
@@ -13,14 +11,6 @@ import {TraverseAndProcessFileHandler} from './types.js';
 
 export function isJSOrTSFilepath(filepath: string) {
   return kJSOrTSFilepathRegex.test(filepath);
-}
-
-export function isJSOrTSTestFilepath(filepath: string) {
-  return kJSOrTSTestFilepathRegex.test(filepath);
-}
-
-export function isTSDeclarationFilepath(filepath: string) {
-  return filepath.endsWith(kDTSExtension);
 }
 
 export function getDirAndBasename(filepath: string) {
@@ -40,40 +30,49 @@ export async function traverseAndProcessFilesInFolderpath<
   handleFile: TraverseAndProcessFileHandler<TArgs>,
   ...args: TArgs
 ) {
-  const dirList = await fsExtra.readdir(folderpath, {withFileTypes: true});
+  async function internalHandleFile(filepath: string) {
+    try {
+      const modifiedFile = await handleFile(filepath, ...args);
 
-  await Promise.all(
-    dirList.map(async entry => {
-      const entryPath = path.normalize(path.join(entry.path, entry.name));
-
-      try {
-        if (entry.isDirectory()) {
-          await traverseAndProcessFilesInFolderpath(
-            entryPath,
-            handleFile,
-            ...args
-          );
-        } else if (entry.isFile()) {
-          const modifiedFile = await handleFile(entryPath, ...args);
-
-          if (modifiedFile) {
-            console.log(`modified ${entryPath}`);
-          }
-        }
-      } catch (error: unknown) {
-        console.log(`error ${entryPath}`);
-        console.error(error);
+      if (modifiedFile) {
+        console.log(`modified ${filepath}`);
       }
-    })
-  );
-}
+    } catch (error) {
+      console.log(`error ${filepath}`);
+      console.error(error);
+    }
+  }
 
-export async function isFileOrFolder(filepath: string) {
-  try {
-    const info = await fsExtra.stat(filepath);
-    return info.isFile() ? 'file' : info.isDirectory() ? 'folder' : undefined;
-  } catch (error: unknown) {
-    return undefined;
+  async function internalHandleFolder(folderpath: string) {
+    try {
+      await traverseAndProcessFilesInFolderpath(
+        folderpath,
+        handleFile,
+        ...args
+      );
+    } catch (error) {
+      console.log(`error ${folderpath}`);
+      console.error(error);
+    }
+  }
+
+  const stat = await fsExtra.stat(folderpath);
+
+  if (stat.isDirectory()) {
+    const dirList = await fsExtra.readdir(folderpath, {withFileTypes: true});
+    await Promise.all(
+      dirList.map(async entry => {
+        const entryPath = path.normalize(path.join(entry.path, entry.name));
+
+        if (entry.isDirectory()) {
+          await internalHandleFolder(entryPath);
+        } else if (entry.isFile()) {
+          await internalHandleFile(entryPath);
+        }
+      })
+    );
+  } else {
+    await internalHandleFile(folderpath);
   }
 }
 
@@ -81,10 +80,7 @@ export function isRelativeImportText(text: string) {
   return kJSRelativeImportRegex.test(text);
 }
 
-export function getImportText(
-  node: ts.StringLiteral,
-  sourceFile: ts.SourceFile
-) {
+export function getImportText(node: ts.Node, sourceFile: ts.SourceFile) {
   return node.getText(sourceFile).replaceAll(kJSQuoteGlobalRegex, '');
 }
 
@@ -106,18 +102,6 @@ export function replaceNodeText(
   const newOffset = offset + (replacementText.length - trimmedNodeText.length);
 
   return {modifiedText, newOffset};
-}
-
-export function isRelativeImportOrExportNodeWithSpecifier(
-  sourceFile: ts.SourceFile,
-  node: ts.Node
-): node is ts.ImportDeclaration | ts.ExportDeclaration {
-  return !!(
-    (ts.isExportDeclaration(node) || ts.isImportDeclaration(node)) &&
-    node.moduleSpecifier &&
-    ts.isStringLiteral(node.moduleSpecifier) &&
-    isRelativeImportText(getImportText(node.moduleSpecifier, sourceFile))
-  );
 }
 
 export function countCharacters(

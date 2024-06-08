@@ -3,11 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.countCharacters = exports.isRelativeImportOrExportNodeWithSpecifier = exports.replaceNodeText = exports.getImportText = exports.isRelativeImportText = exports.isFileOrFolder = exports.traverseAndProcessFilesInFolderpath = exports.isTSDeclarationFilepath = exports.isJSOrTSTestFilepath = exports.isJSOrTSFilepath = void 0;
+exports.checkExtension = exports.countCharacters = exports.isRelativeImportOrExportNodeWithSpecifier = exports.replaceNodeText = exports.getImportText = exports.isRelativeImportText = exports.isFileOrFolder = exports.traverseAndProcessFilesInFolderpath = exports.getDirAndBasename = exports.isTSDeclarationFilepath = exports.isJSOrTSTestFilepath = exports.isJSOrTSFilepath = void 0;
+const assert_1 = __importDefault(require("assert"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const typescript_1 = __importDefault(require("typescript"));
-const constants_js_1 = require("./constants.js");
+const constants_js_1 = require("./constants.cjs");
+const types_js_1 = require("./types.cjs");
 function isJSOrTSFilepath(filepath) {
     return constants_js_1.kJSOrTSFilepathRegex.test(filepath);
 }
@@ -20,16 +22,25 @@ function isTSDeclarationFilepath(filepath) {
     return filepath.endsWith(constants_js_1.kDTSExtension);
 }
 exports.isTSDeclarationFilepath = isTSDeclarationFilepath;
-async function traverseAndProcessFilesInFolderpath(folderpath, handleFile) {
+function getDirAndBasename(filepath) {
+    var _a;
+    const matches = constants_js_1.kCaptureDirAndBasenameFromJSOrTSFilepathRegex.exec(filepath);
+    if (matches) {
+        return (_a = matches.groups) === null || _a === void 0 ? void 0 : _a.dirAndBasename;
+    }
+    return undefined;
+}
+exports.getDirAndBasename = getDirAndBasename;
+async function traverseAndProcessFilesInFolderpath(folderpath, handleFile, ...args) {
     const dirList = await fs_extra_1.default.readdir(folderpath, { withFileTypes: true });
     await Promise.all(dirList.map(async (entry) => {
         const entryPath = path_1.default.normalize(path_1.default.join(entry.path, entry.name));
         try {
             if (entry.isDirectory()) {
-                await traverseAndProcessFilesInFolderpath(entryPath, handleFile);
+                await traverseAndProcessFilesInFolderpath(entryPath, handleFile, ...args);
             }
             else if (entry.isFile()) {
-                const modifiedFile = await handleFile(entryPath);
+                const modifiedFile = await handleFile(entryPath, ...args);
                 if (modifiedFile) {
                     console.log(`modified ${entryPath}`);
                 }
@@ -95,3 +106,12 @@ function countCharacters(text, from, to, exp) {
     return { totalCount, numCharsToFirstOccurrence };
 }
 exports.countCharacters = countCharacters;
+function checkExtension(argName, ext) {
+    if (ext) {
+        (0, assert_1.default)(constants_js_1.kExtensions.includes(ext), `Invalid ${argName} arg, expected one of ${Object.values(types_js_1.kProcessCmdType)
+            .map(name => `"${name}"`)
+            .join(' | ')}`);
+    }
+    return ext;
+}
+exports.checkExtension = checkExtension;

@@ -1,98 +1,106 @@
-import assert from 'assert';
-import {Command, Option} from 'commander';
+import cliui from '@isaacs/cliui';
+import fsExtra from 'fs-extra';
 import {addExtCmd} from './addExt.js';
 import {addVitestToTestCmd} from './addVitestToTests.js';
-import {kExtensions, kJSExtension} from './constants.js';
-import pkgJson from './package.json';
+import {
+  getArg,
+  getMainCmd,
+  getRequiredArg,
+  parseCLIArgs,
+  printCommand,
+} from './cli.js';
+import {kAppliesToMessage, kCmdVars} from './constants.js';
 import {renameExtCmd} from './renameExt.js';
-import {kProcessCmdType} from './types.js';
+import {PackageJson, kProcessCmdType} from './types.js';
 
-interface PackageJson {
-  name?: string;
-  version?: string;
-  description?: string;
-}
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+const ui = new cliui({width: 80, padding: [0, 4, 0, 4]});
 
-function checkExtension(argName: string, ext?: string) {
-  if (ext) {
-    assert(
-      kExtensions.includes(ext),
-      `Invalid ${argName} arg, expected one of ${Object.values(kProcessCmdType)
-        .map(name => `"${name}"`)
-        .join(' | ')}`
-    );
+async function main() {
+  const pkgJson = await fsExtra.readJSON('./package.json');
+
+  const name = (pkgJson as PackageJson).name || 'code-migration-helpers';
+  const description =
+    (pkgJson as PackageJson).description ||
+    'Provides useful (but currently not thorough) code migration helpers';
+  const version = (pkgJson as PackageJson).version || '0.1.0';
+
+  const args = parseCLIArgs(process.argv.slice(2));
+  const mainCmd = getMainCmd(args);
+
+  switch (mainCmd) {
+    case kProcessCmdType.addExtToImports: {
+      const folderpath = getRequiredArg({args, name: kCmdVars.folder});
+      const from = getArg({args, name: kCmdVars.from});
+      const to = getArg({args, name: kCmdVars.to});
+      await addExtCmd(folderpath, {from, to});
+      break;
+    }
+
+    case kProcessCmdType.jestToVitest: {
+      const folderpath = getRequiredArg({args, name: kCmdVars.folder});
+      await addVitestToTestCmd(folderpath);
+      break;
+    }
+
+    case kProcessCmdType.renameExt: {
+      const folderpath = getRequiredArg({args, name: kCmdVars.folder});
+      const from = getRequiredArg({args, name: kCmdVars.from});
+      const to = getRequiredArg({args, name: kCmdVars.to});
+      await renameExtCmd(folderpath, {from, to});
+      break;
+    }
+
+    case kProcessCmdType.version:
+      ui.div(`${name} - v${version}`);
+      console.log(ui.toString());
+      break;
+
+    case kProcessCmdType.help:
+    default:
+      ui.div(`${name} - v${version}`);
+      ui.div({text: 'DESCRIPTION', width: 20}, description);
+
+      printCommand(
+        ui,
+        kProcessCmdType.addExtToImports,
+        'Add extension to relative imports',
+        [
+          {name: kCmdVars.folder, description: 'folderpath to operate in'},
+          {
+            name: kCmdVars.from,
+            description: 'existing relative import extension to replace',
+          },
+          {name: kCmdVars.to, description: 'extension to replace with'},
+        ]
+      );
+
+      printCommand(
+        ui,
+        kProcessCmdType.jestToVitest,
+        'Import "vitest" test constructs and replace "jest.fn" with "vi.fn". ' +
+          'Does nothing if there\'s an existing "vitest" import. ' +
+          kAppliesToMessage,
+        [{name: kCmdVars.folder, description: 'folderpath to operate in'}]
+      );
+
+      printCommand(
+        ui,
+        kProcessCmdType.renameExt,
+        'Rename filename extensions',
+        [
+          {name: kCmdVars.folder, description: 'folderpath to operate in'},
+          {name: kCmdVars.from, description: 'extension to replace'},
+          {name: kCmdVars.to, description: 'extension to replace with'},
+        ]
+      );
+
+      printCommand(ui, kProcessCmdType.help, 'Print commands');
+      printCommand(ui, kProcessCmdType.version, 'Print version');
+      console.log(ui.toString());
+      break;
   }
 }
 
-const program = new Command();
-const name = (pkgJson as PackageJson).name || 'code-migration-helpers';
-const description =
-  (pkgJson as PackageJson).description ||
-  'Provides useful (but currently not thorough) code migration helpers';
-const version = (pkgJson as PackageJson).version || '0.1.0';
-const kAppliesToMessage = `Only considers files ending in ${kExtensions
-  .map(name => `"${name}"`)
-  .join(', ')}.`;
-
-program.name(name).description(description).version(version);
-
-program
-  .command(kProcessCmdType.addExtToImports)
-  .description('Add extension to relative imports. ' + kAppliesToMessage)
-  .argument('<string>', 'folderpath to operate in')
-  .addOption(
-    new Option(
-      '--from',
-      'existing relative import extension to replace'
-    ).choices(kExtensions)
-  )
-  .addOption(
-    new Option('--to', 'extension to replace with')
-      .choices(kExtensions)
-      .default(kJSExtension)
-  )
-  .action(async (folderpath, options) => {
-    const from = options.from;
-    const to = options.to;
-    checkExtension('--from', from);
-    checkExtension('--to', to);
-
-    await addExtCmd(folderpath, {from, to});
-  });
-
-program
-  .command(kProcessCmdType.jestToVitest)
-  .description(
-    'Import "vitest" test constructs and replace "jest.fn" with "vi.fn". ' +
-      'Does nothing if there\'s an existing "vitest" import. ' +
-      kAppliesToMessage
-  )
-  .argument('<string>', 'folderpath to operate in')
-  .action(async folderpath => {
-    await addVitestToTestCmd(folderpath);
-  });
-
-program
-  .command(kProcessCmdType.renameExt)
-  .description('Rename filename extensions. ' + kAppliesToMessage)
-  .argument('<string>', 'folderpath to operate in')
-  .addOption(
-    new Option('--from', 'extension to replace')
-      .choices(kExtensions)
-      .makeOptionMandatory(true)
-  )
-  .addOption(
-    new Option('--to', 'extension to replace with')
-      .choices(kExtensions)
-      .makeOptionMandatory(true)
-  )
-  .action(async (folderpath, options) => {
-    const from = options.from;
-    const to = options.to;
-    checkExtension('--from', from);
-    checkExtension('--to', to);
-
-    await renameExtCmd(folderpath, {from, to});
-  });
-
-program.parse();
+main().catch(console.error.bind(console));

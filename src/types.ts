@@ -1,46 +1,4 @@
-import {Dirent} from 'fs-extra';
 import {ValueOf} from 'type-fest';
-
-export interface ExplicitModification {
-  prev: string;
-  after: string;
-  partIndex: number;
-  originalPart: string;
-  modifiedPart: string;
-}
-
-export const kProcessedFileOutcome = {
-  skip: 'skip',
-  error: 'error',
-  processed: 'processed',
-} as const;
-
-export type ProcessedFileOutcome = ValueOf<typeof kProcessedFileOutcome>;
-
-export type ProcessedFile =
-  | {
-      outcome: typeof kProcessedFileOutcome.skip;
-      filepath: string;
-      skipReason: string;
-    }
-  | {
-      outcome: typeof kProcessedFileOutcome.processed;
-      filepath: string;
-      explicitModifications?: ExplicitModification[];
-      isModified: boolean;
-      originalParts: string[];
-      workingParts: string[];
-    }
-  | {
-      outcome: typeof kProcessedFileOutcome.error;
-      filepath: string;
-      error: unknown;
-    };
-
-export type FileTreeTraverseHandler = (
-  dirent: Dirent,
-  entryPath: string
-) => Promise<ProcessedFile | undefined>;
 
 export type TraverseAndProcessFileHandler<TArgs extends unknown[]> = (
   entryPath: string,
@@ -48,9 +6,23 @@ export type TraverseAndProcessFileHandler<TArgs extends unknown[]> = (
 ) => Promise<boolean>;
 
 export const kProcessCmdType = {
-  addExtToImports: 'add-ext-to-imports',
+  addExtToImports: 'add-ext',
   jestToVitest: 'jest-to-vitest',
   renameExt: 'rename-ext',
+  help: 'help',
+  version: 'version',
 } as const;
 
 export type ProcessCmdType = ValueOf<typeof kProcessCmdType>;
+
+export interface ParsedCLIArgs {
+  argsTuple: [string, string][];
+  argsMap: Record<string, string | undefined>;
+  unamedArgs: string[];
+}
+
+export interface PackageJson {
+  name?: string;
+  version?: string;
+  description?: string;
+}

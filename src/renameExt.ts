@@ -1,5 +1,6 @@
 import {rename} from 'fs/promises';
 import path from 'path';
+import {kDTSExtension} from './constants.js';
 import {TraverseAndProcessFileHandler} from './types.js';
 import {traverseAndProcessFilesInFolderpath} from './utils.js';
 
@@ -11,7 +12,7 @@ export interface RenameExtOpts {
 export const renameExtTraverseHandler: TraverseAndProcessFileHandler<
   [RenameExtOpts]
 > = async (filepath: string, opts: RenameExtOpts) => {
-  if (!filepath.endsWith(opts.from)) {
+  if (!filepath.endsWith(opts.from) || filepath.endsWith(kDTSExtension)) {
     return false;
   }
 

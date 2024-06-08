@@ -7,8 +7,9 @@ exports.kProcessedFileOutcome = {
     processed: 'processed',
 };
 exports.kProcessCmdType = {
-    addJsExt: 'add-js-ext',
+    addExtToImports: 'add-ext',
     jestToVitest: 'jest-to-vitest',
-    renameToCjs: 'rename-to-cjs',
+    renameExt: 'rename-ext',
     help: 'help',
+    version: 'version',
 };

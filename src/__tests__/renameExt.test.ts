@@ -6,8 +6,6 @@ import {
   kCTSExtension,
   kDTSExtension,
   kJSExtension,
-  kMJSExtension,
-  kMTSExtension,
   kTSExtension,
 } from '../constants.js';
 import {renameExtTraverseHandler} from '../renameExt.js';
@@ -36,8 +34,14 @@ describe('renameExt', () => {
     await Promise.all([ensureFile(paths.ts), ensureFile(paths.js)]);
 
     await Promise.all([
-      renameExtTraverseHandler(paths.ts),
-      renameExtTraverseHandler(paths.js),
+      renameExtTraverseHandler(paths.ts, {
+        from: kTSExtension,
+        to: kCTSExtension,
+      }),
+      renameExtTraverseHandler(paths.js, {
+        from: kJSExtension,
+        to: kCJSExtension,
+      }),
     ]);
 
     const [ctsExists, cjsExists, tsExists, jsExists] = await Promise.all([
@@ -55,40 +59,18 @@ describe('renameExt', () => {
   test('renameExtTraverseHandler not .js or .ts or .d.ts', async () => {
     const filename = Date.now();
     const paths = {
-      mts: path.join(testDir, filename + kMTSExtension),
-      mjs: path.join(testDir, filename + kMJSExtension),
-      cts: path.join(testDir, filename + kCTSExtension),
-      cjs: path.join(testDir, filename + kCJSExtension),
       dts: path.join(testDir, filename + kDTSExtension),
     };
-    await Promise.all([
-      ensureFile(paths.mts),
-      ensureFile(paths.mjs),
-      ensureFile(paths.cts),
-      ensureFile(paths.cjs),
-      ensureFile(paths.dts),
-    ]);
+    await Promise.all([ensureFile(paths.dts)]);
 
     await Promise.all([
-      renameExtTraverseHandler(paths.mts),
-      renameExtTraverseHandler(paths.mjs),
-      renameExtTraverseHandler(paths.cts),
-      renameExtTraverseHandler(paths.cjs),
-      renameExtTraverseHandler(paths.dts),
+      renameExtTraverseHandler(paths.dts, {
+        from: kTSExtension,
+        to: kCJSExtension,
+      }),
     ]);
 
-    const [mtsExists, mjsExists, ctsExists, cjsExists, dtsExists] =
-      await Promise.all([
-        pathExists(paths.mts),
-        pathExists(paths.mjs),
-        pathExists(paths.cts),
-        pathExists(paths.cjs),
-        pathExists(paths.dts),
-      ]);
-    expect(mtsExists).toBeTruthy();
-    expect(mjsExists).toBeTruthy();
-    expect(ctsExists).toBeTruthy();
-    expect(cjsExists).toBeTruthy();
+    const [dtsExists] = await Promise.all([pathExists(paths.dts)]);
     expect(dtsExists).toBeTruthy();
   });
 });

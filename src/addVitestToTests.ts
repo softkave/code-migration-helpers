@@ -1,6 +1,5 @@
 import assert from 'assert';
 import {writeFile} from 'fs/promises';
-import * as ts from 'typescript';
 import {
   kExpectedTestConstructs,
   kJest,
@@ -17,6 +16,7 @@ import {
   replaceNodeText,
   traverseAndProcessFilesInFolderpath,
 } from './utils.js';
+import ts = require('typescript');
 
 interface TrackedModification {
   node: ts.Node;
@@ -250,14 +250,15 @@ async function addVitestToTestInFilepath(filepath: string) {
   return true;
 }
 
-export const addVitestToTestTraverseHandler: TraverseAndProcessFileHandler =
-  async (filepath: string) => {
-    if (isJSOrTSFilepath(filepath)) {
-      return await addVitestToTestInFilepath(filepath);
-    }
+export const addVitestToTestTraverseHandler: TraverseAndProcessFileHandler<
+  []
+> = async (filepath: string) => {
+  if (isJSOrTSFilepath(filepath)) {
+    return await addVitestToTestInFilepath(filepath);
+  }
 
-    return false;
-  };
+  return false;
+};
 
 export async function addVitestToTestCmd(folderpath: string) {
   await traverseAndProcessFilesInFolderpath(

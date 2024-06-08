@@ -38,3 +38,13 @@ export const kExtensions = [
   kMJSExtension,
   kMTSExtension,
 ];
+export const kAppliesToMessage = `Only considers files ending in [${kExtensions.join(
+  ', '
+)}].`;
+export const kCmdVars = {
+  folder: '-f',
+  from: '--from',
+  to: '--to',
+} as const;
+export const kRPackageJsonFilepath = './rpackage.json';
+export const kRequire = 'require';
