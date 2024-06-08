@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import cliui from '@isaacs/cliui';
 import fsExtra from 'fs-extra';
 import {addExtCmd} from './addExt.js';

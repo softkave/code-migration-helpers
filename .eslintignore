@@ -1,2 +1,3 @@
 build/
-bin/
+cjs-bin/
+esm-bin/

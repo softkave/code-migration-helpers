@@ -79,15 +79,14 @@ function getMainCmd(args) {
     return (_a = args.argsTuple[0]) === null || _a === void 0 ? void 0 : _a[0];
 }
 exports.getMainCmd = getMainCmd;
-function printCommand(name, description, options) {
-    console.log(`${name}`);
+function printCommand(ui, name, description, options) {
+    ui.div(name);
     if (description) {
-        console.log(`\tDESCRIPTION - ${description}`);
+        ui.div({ text: 'DESCRIPTION', width: 20, padding: [0, 4, 0, 4] }, description);
     }
     if (options === null || options === void 0 ? void 0 : options.length) {
-        console.log('\tOPTIONS - ');
         options.forEach(opt => {
-            console.log(`\t\t${opt.name}\t${opt.description}`);
+            ui.div({ text: opt.name, width: 20, padding: [0, 4, 0, 4] }, opt.description);
         });
     }
 }

@@ -3,14 +3,15 @@
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "bin",
+    "outDir": "cjs-bin",
     "lib": ["es2021"],
     "removeComments": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "declaration": false,
     "sourceMap": false,
-    "resolveJsonModule": true
+    "module": "CommonJS",
+    "moduleResolution": "Node"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
