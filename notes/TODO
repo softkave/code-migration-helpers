@@ -1,0 +1,3 @@
+- show skipped files and while
+- how to handle existing imports from "node:test" or other imports
+- write tests for handling large folders

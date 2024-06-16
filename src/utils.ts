@@ -30,11 +30,16 @@ export async function traverseAndProcessFilesInFolderpath<
   handleFile: TraverseAndProcessFileHandler<TArgs>,
   ...args: TArgs
 ) {
+  const stat = await fsExtra.stat(folderpath);
+  let filepathList: string[] = [];
+  const folderpathList: string[] = [];
+  const kIterationMax = 20;
+
   async function internalHandleFile(filepath: string) {
     try {
-      const modifiedFile = await handleFile(filepath, ...args);
+      const isModified = await handleFile(filepath, ...args);
 
-      if (modifiedFile) {
+      if (isModified) {
         console.log(`modified ${filepath}`);
       }
     } catch (error) {
@@ -43,36 +48,52 @@ export async function traverseAndProcessFilesInFolderpath<
     }
   }
 
-  async function internalHandleFolder(folderpath: string) {
+  async function processNextFolderpath() {
+    const nextFolderpath = folderpathList.shift();
+
+    if (!nextFolderpath) {
+      return;
+    }
+
     try {
-      await traverseAndProcessFilesInFolderpath(
-        folderpath,
-        handleFile,
-        ...args
-      );
+      const dirList = await fsExtra.readdir(nextFolderpath, {
+        withFileTypes: true,
+      });
+      dirList.forEach(async entry => {
+        const entryPath = path.normalize(path.join(entry.path, entry.name));
+
+        if (entry.isDirectory()) {
+          folderpathList.push(entryPath);
+        } else if (entry.isFile()) {
+          filepathList.push(entryPath);
+        }
+      });
     } catch (error) {
-      console.log(`error ${folderpath}`);
+      console.log(`error ${nextFolderpath}`);
       console.error(error);
     }
   }
 
-  const stat = await fsExtra.stat(folderpath);
+  async function processQueuedFiles() {
+    for (let i = 0; i < filepathList.length; i += kIterationMax) {
+      await Promise.all(
+        filepathList
+          .slice(i, kIterationMax)
+          .map(filepath => internalHandleFile(filepath))
+      );
+    }
+
+    filepathList = [];
+  }
 
   if (stat.isDirectory()) {
-    const dirList = await fsExtra.readdir(folderpath, {withFileTypes: true});
-    await Promise.all(
-      dirList.map(async entry => {
-        const entryPath = path.normalize(path.join(entry.path, entry.name));
-
-        if (entry.isDirectory()) {
-          await internalHandleFolder(entryPath);
-        } else if (entry.isFile()) {
-          await internalHandleFile(entryPath);
-        }
-      })
-    );
+    folderpathList.push(folderpath);
   } else {
-    await internalHandleFile(folderpath);
+    filepathList.push(folderpath);
+  }
+
+  while (folderpathList.length || filepathList.length) {
+    await Promise.all([processQueuedFiles(), processNextFolderpath()]);
   }
 }
 
