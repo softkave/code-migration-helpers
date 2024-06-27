@@ -1,3 +1,4 @@
-- show skipped files and while
+- show skipped files and why
 - how to handle existing imports from "node:test" or other imports
 - write tests for handling large folders
+- add-ext skipping some folders, why?
