@@ -2,3 +2,4 @@
 - how to handle existing imports from "node:test" or other imports
 - write tests for handling large folders
 - add-ext skipping some folders, why?
+- there is a bug where it uses different import specifier for a different import block
