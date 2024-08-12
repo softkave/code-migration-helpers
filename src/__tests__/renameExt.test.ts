@@ -1,16 +1,16 @@
 import {ensureDir, ensureFile, pathExists, remove} from 'fs-extra/esm';
 import path from 'path';
 import {afterEach, assert, beforeEach, describe, expect, test} from 'vitest';
+import {renameExtTraverseHandler} from '../renameExt.js';
 import {
   kCJSExtension,
   kCTSExtension,
   kDTSExtension,
   kJSExtension,
   kTSExtension,
-} from '../constants.js';
-import {renameExtTraverseHandler} from '../renameExt.js';
+} from '../utils/constants.js';
 
-const kTestLocalFsDir = './testdir';
+const kTestLocalFsDir = '.' + path.sep + 'testdir/renameExtDir';
 const testDir = path.join(kTestLocalFsDir + '/' + Date.now());
 
 beforeEach(async () => {
@@ -34,13 +34,13 @@ describe('renameExt', () => {
     await Promise.all([ensureFile(paths.ts), ensureFile(paths.js)]);
 
     await Promise.all([
-      renameExtTraverseHandler(paths.ts, {
-        from: kTSExtension,
-        to: kCTSExtension,
+      renameExtTraverseHandler({
+        filepath: paths.ts,
+        args: [/** opts */ {from: kTSExtension, to: kCTSExtension}],
       }),
-      renameExtTraverseHandler(paths.js, {
-        from: kJSExtension,
-        to: kCJSExtension,
+      renameExtTraverseHandler({
+        filepath: paths.js,
+        args: [/** opts */ {from: kJSExtension, to: kCJSExtension}],
       }),
     ]);
 
@@ -64,9 +64,9 @@ describe('renameExt', () => {
     await Promise.all([ensureFile(paths.dts)]);
 
     await Promise.all([
-      renameExtTraverseHandler(paths.dts, {
-        from: kTSExtension,
-        to: kCJSExtension,
+      renameExtTraverseHandler({
+        filepath: paths.dts,
+        args: [/** opts */ {from: kTSExtension, to: kCJSExtension}],
       }),
     ]);
 

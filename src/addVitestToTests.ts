@@ -1,21 +1,21 @@
 import assert from 'assert';
 import {writeFile} from 'fs/promises';
 import {
+  countCharacters,
+  getImportOrExportSource,
+  isJSOrTSFilepath,
+  isRelativeImportOrExportSource,
+  replaceNodeText,
+  traverseAndProcessFilesInFolderpath,
+} from './utils.js';
+import {
   kExpectedTestConstructs,
   kJest,
   kNewline,
   kVi,
   kVitest,
-} from './constants.js';
-import {TraverseAndProcessFileHandler} from './types.js';
-import {
-  countCharacters,
-  getImportText,
-  isJSOrTSFilepath,
-  isRelativeImportText,
-  replaceNodeText,
-  traverseAndProcessFilesInFolderpath,
-} from './utils.js';
+} from './utils/constants.js';
+import {TraverseAndProcessFileHandler} from './utils/types.js';
 import ts = require('typescript');
 
 interface TrackedModification {
@@ -66,7 +66,9 @@ function getLastNonRelativeImportOrExportNode(sourceFile: ts.SourceFile) {
       (ts.isExportDeclaration(node) || ts.isImportDeclaration(node)) &&
       node.moduleSpecifier &&
       ts.isStringLiteral(node.moduleSpecifier) &&
-      !isRelativeImportText(getImportText(node.moduleSpecifier, sourceFile))
+      !isRelativeImportOrExportSource(
+        getImportOrExportSource(node.moduleSpecifier, sourceFile)
+      )
     ) {
       lastNonRelativeImportNode = node;
       return true;
@@ -145,7 +147,7 @@ function containsVitestImport(sourceFile: ts.SourceFile) {
       ts.isImportDeclaration(node) &&
       node.moduleSpecifier &&
       ts.isStringLiteral(node.moduleSpecifier) &&
-      getImportText(node.moduleSpecifier, sourceFile) === kVitest
+      getImportOrExportSource(node.moduleSpecifier, sourceFile) === kVitest
     ) {
       hasVitestImport = true;
       return true;
@@ -252,7 +254,7 @@ async function addVitestToTestInFilepath(filepath: string) {
 
 export const addVitestToTestTraverseHandler: TraverseAndProcessFileHandler<
   []
-> = async (filepath: string) => {
+> = async ({filepath}) => {
   if (isJSOrTSFilepath(filepath)) {
     return await addVitestToTestInFilepath(filepath);
   }
@@ -261,8 +263,9 @@ export const addVitestToTestTraverseHandler: TraverseAndProcessFileHandler<
 };
 
 export async function addVitestToTestCmd(folderpath: string) {
-  await traverseAndProcessFilesInFolderpath(
+  await traverseAndProcessFilesInFolderpath({
     folderpath,
-    addVitestToTestTraverseHandler
-  );
+    handler: addVitestToTestTraverseHandler,
+    handlerArgs: [],
+  });
 }

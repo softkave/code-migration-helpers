@@ -1,7 +1,7 @@
 export declare const kJest = "jest";
 export declare const kVi = "vi";
 export declare const kVitest = "vitest";
-export declare const kJSRelativeImportRegex: RegExp;
+export declare const kJSRelativeImportOrExportSourceRegex: RegExp;
 export declare const kJSOrTSFilepathRegex: RegExp;
 export declare const kJSOrTSTestFilepathRegex: RegExp;
 export declare const kCaptureDirAndBasenameFromJSOrTSFilepathRegex: RegExp;
@@ -26,6 +26,11 @@ export declare const kCmdVars: {
     readonly folder: "-f";
     readonly from: "--from";
     readonly to: "--to";
+    readonly include: "--in";
+    readonly exclude: "--ex";
+    readonly preserveCase: "-p";
 };
-export declare const kRPackageJsonFilepath = "./rpackage.json";
 export declare const kRequire = "require";
+export declare const kIndexFilename = "index";
+export declare const kModuleText = "module";
+export declare const kExportsText = "exports";

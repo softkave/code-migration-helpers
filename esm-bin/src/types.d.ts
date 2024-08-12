@@ -1,9 +1,14 @@
 import { ValueOf } from 'type-fest';
-export type TraverseAndProcessFileHandler<TArgs extends unknown[]> = (entryPath: string, ...args: TArgs) => Promise<boolean>;
+export type TraverseAndProcessFileHandler<TArgs extends unknown[]> = (props: {
+    filepath: string;
+    args: TArgs;
+}) => Promise<boolean | string>;
 export declare const kProcessCmdType: {
     readonly addExtToImports: "add-ext";
     readonly jestToVitest: "jest-to-vitest";
     readonly renameExt: "rename-ext";
+    readonly addIndexFile: "add-index";
+    readonly renameFile: "rename-file";
     readonly help: "help";
     readonly version: "version";
 };

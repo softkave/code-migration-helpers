@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest';
+import {ParsedCLIArgs} from '../../types.js';
 import {parseCLIArgs} from '../cli.js';
-import {ParsedCLIArgs} from '../types.js';
 
 describe('parseCLIArgs', () => {
   test('parseCLIArgs', () => {

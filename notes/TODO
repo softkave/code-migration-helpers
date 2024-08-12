@@ -1,5 +1,19 @@
+# TODO
+
+# Trunk
+
 - show skipped files and why
-- how to handle existing imports from "node:test" or other imports
 - write tests for handling large folders
-- add-ext skipping some folders, why?
-- there is a bug where it uses different import specifier for a different import block
+
+# Add `vitest` to tests
+
+- how to handle existing imports from "node:test" or other imports
+
+# Add index file
+
+- using/merging with an existing export declaration
+  - import then export occurrences
+- index file extension OR default to first entry file extension
+- explicit vs full (\*) exports when exporting every export
+- allow user specify index filename
+- support module.exports

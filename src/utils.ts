@@ -5,9 +5,9 @@ import {
   kCaptureDirAndBasenameFromJSOrTSFilepathRegex,
   kJSOrTSFilepathRegex,
   kJSQuoteGlobalRegex,
-  kJSRelativeImportRegex,
-} from './constants.js';
-import {TraverseAndProcessFileHandler} from './types.js';
+  kJSRelativeImportOrExportSourceRegex,
+} from './utils/constants.js';
+import {TraverseAndProcessFileHandler} from './utils/types.js';
 
 export function isJSOrTSFilepath(filepath: string) {
   return kJSOrTSFilepathRegex.test(filepath);
@@ -25,11 +25,13 @@ export function getDirAndBasename(filepath: string) {
 
 export async function traverseAndProcessFilesInFolderpath<
   TArgs extends unknown[],
->(
-  folderpath: string,
-  handleFile: TraverseAndProcessFileHandler<TArgs>,
-  ...args: TArgs
-) {
+>(props: {
+  folderpath: string;
+  handler: TraverseAndProcessFileHandler<TArgs>;
+  handlerArgs: TArgs;
+}) {
+  const {folderpath, handler: handleFile, handlerArgs} = props;
+
   const stat = await fsExtra.stat(folderpath);
   let filepathList: string[] = [];
   const folderpathList: string[] = [];
@@ -37,10 +39,12 @@ export async function traverseAndProcessFilesInFolderpath<
 
   async function internalHandleFile(filepath: string) {
     try {
-      const isModified = await handleFile(filepath, ...args);
+      const isModifiedOrMsg = await handleFile({filepath, args: handlerArgs});
 
-      if (isModified) {
+      if (typeof isModifiedOrMsg === 'boolean' && isModifiedOrMsg) {
         console.log(`modified ${filepath}`);
+      } else if (typeof isModifiedOrMsg === 'string') {
+        console.log(isModifiedOrMsg);
       }
     } catch (error) {
       console.log(`error ${filepath}`);
@@ -93,15 +97,21 @@ export async function traverseAndProcessFilesInFolderpath<
   }
 
   while (folderpathList.length || filepathList.length) {
-    await Promise.all([processQueuedFiles(), processNextFolderpath()]);
+    // Some commands like `addIndexFile` relies on a folder's files being
+    // processed before children folders are processed
+    await processQueuedFiles();
+    await processNextFolderpath();
   }
 }
 
-export function isRelativeImportText(text: string) {
-  return kJSRelativeImportRegex.test(text);
+export function isRelativeImportOrExportSource(text: string) {
+  return kJSRelativeImportOrExportSourceRegex.test(text);
 }
 
-export function getImportText(node: ts.Node, sourceFile: ts.SourceFile) {
+export function getImportOrExportSource(
+  node: ts.Node,
+  sourceFile: ts.SourceFile
+) {
   return node.getText(sourceFile).replaceAll(kJSQuoteGlobalRegex, '');
 }
 

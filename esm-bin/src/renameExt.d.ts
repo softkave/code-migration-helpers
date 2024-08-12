@@ -1,4 +1,4 @@
-import { TraverseAndProcessFileHandler } from './types.mjs';
+import { TraverseAndProcessFileHandler } from './types.js';
 export interface RenameExtOpts {
     from: string;
     to: string;

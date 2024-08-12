@@ -2,18 +2,21 @@
 
 import cliui from '@isaacs/cliui';
 import fsExtra from 'fs-extra';
+import path from 'path';
 import {addExtCmd} from './addExt.js';
+import {addIndexFileCmd} from './addIndexFile/addIndexFileCmd.js';
 import {addVitestToTestCmd} from './addVitestToTests.js';
+import {renameExtCmd} from './renameExt.js';
+import {renameFileCmd} from './renameFile.js';
 import {
   getArg,
   getMainCmd,
   getRequiredArg,
   parseCLIArgs,
   printCommand,
-} from './cli.js';
-import {kAppliesToMessage, kCmdVars} from './constants.js';
-import {renameExtCmd} from './renameExt.js';
-import {PackageJson, kProcessCmdType} from './types.js';
+} from './utils/cli/cli.js';
+import {kAppliesToMessage, kCmdVars} from './utils/constants.js';
+import {PackageJson, kProcessCmdType} from './utils/types.js';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -51,6 +54,34 @@ async function main() {
       const from = getRequiredArg({args, name: kCmdVars.from});
       const to = getRequiredArg({args, name: kCmdVars.to});
       await renameExtCmd(folderpath, {from, to});
+      break;
+    }
+
+    case kProcessCmdType.addIndexFile: {
+      const folderpath = getRequiredArg({args, name: kCmdVars.folder});
+      const includeArg = getRequiredArg({args, name: kCmdVars.include});
+      const excludeArg = getRequiredArg({args, name: kCmdVars.exclude});
+      const absFolderpath = path.isAbsolute(folderpath)
+        ? folderpath
+        : path.join(process.cwd(), folderpath);
+      await addIndexFileCmd({
+        absFolderpath,
+        includeStrOrRegex: [includeArg],
+        excludeStrOrRegex: [excludeArg],
+      });
+      break;
+    }
+
+    case kProcessCmdType.renameFile: {
+      const folderpath = getRequiredArg({args, name: kCmdVars.folder});
+      const fromArg = getRequiredArg({args, name: kCmdVars.include});
+      const toArg = getRequiredArg({args, name: kCmdVars.exclude});
+      const preserveCaseArg = getRequiredArg({args, name: kCmdVars.exclude});
+
+      const preserveCase = !!preserveCaseArg;
+      await renameFileCmd(folderpath, {
+        asks: [{preserveCase, from: fromArg, to: toArg}],
+      });
       break;
     }
 
@@ -95,6 +126,46 @@ async function main() {
           {name: kCmdVars.folder, description: 'folderpath to operate in'},
           {name: kCmdVars.from, description: 'extension to replace'},
           {name: kCmdVars.to, description: 'extension to replace with'},
+        ]
+      );
+
+      printCommand(
+        ui,
+        kProcessCmdType.addIndexFile,
+        'Recursively adds index files to  folders',
+        [
+          {name: kCmdVars.folder, description: 'folderpath to operate in'},
+          {
+            name: kCmdVars.include,
+            description:
+              'string or js-flavor regex of file and folder names to include',
+          },
+          {
+            name: kCmdVars.exclude,
+            description:
+              'string or js-flavor regex of file and folder names to exclude',
+          },
+        ]
+      );
+
+      printCommand(
+        ui,
+        kProcessCmdType.renameFile,
+        'Recursively adds index files to  folders',
+        [
+          {name: kCmdVars.folder, description: 'folderpath to operate in'},
+          {
+            name: kCmdVars.from,
+            description:
+              'string or js-flavor regex of file and folder name to replace',
+          },
+          {name: kCmdVars.to, description: 'string to replace with'},
+          {
+            name: kCmdVars.preserveCase,
+            description:
+              'whether to preserve case when replacing. ' +
+              'will preserve case if passed in any form, omit to not preserve case.',
+          },
         ]
       );
 

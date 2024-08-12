@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {ParsedCLIArgs} from './types.js';
+import {ParsedCLIArgs} from '../types.js';
 import cliui = require('@isaacs/cliui');
 
 export function parseCLIArgs(input: string | string[]) {

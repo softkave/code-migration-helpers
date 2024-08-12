@@ -1,4 +1,4 @@
-import { ParsedCLIArgs } from './types.mjs';
+import { ParsedCLIArgs } from './types.js';
 import cliui = require('@isaacs/cliui');
 export declare function parseCLIArgs(input: string | string[]): {
     argsTuple: [string, string][];

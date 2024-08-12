@@ -3,6 +3,14 @@ import {pathExists} from 'fs-extra';
 import {writeFile} from 'fs/promises';
 import path from 'path';
 import {
+  getDirAndBasename,
+  getImportOrExportSource,
+  isJSOrTSFilepath,
+  isRelativeImportOrExportSource,
+  replaceNodeText,
+  traverseAndProcessFilesInFolderpath,
+} from './utils.js';
+import {
   kCJSExtension,
   kCTSExtension,
   kExtensions,
@@ -10,19 +18,10 @@ import {
   kJSExtension,
   kMJSExtension,
   kMTSExtension,
-  kPosixFolderSeparator,
   kRequire,
   kTSExtension,
-} from './constants.js';
-import {TraverseAndProcessFileHandler} from './types.js';
-import {
-  getDirAndBasename,
-  getImportText,
-  isJSOrTSFilepath,
-  isRelativeImportText,
-  replaceNodeText,
-  traverseAndProcessFilesInFolderpath,
-} from './utils.js';
+} from './utils/constants.js';
+import {TraverseAndProcessFileHandler} from './utils/types.js';
 import ts = require('typescript');
 
 export interface AddExtOpts {
@@ -63,10 +62,7 @@ export async function getImportTextWithExt(
       path.join(dir, importTextWithoutExt + checkExt)
     );
     const indexFilepath = path.normalize(
-      path.join(
-        dir,
-        importTextWithoutExt + kPosixFolderSeparator + kIndex + checkExt
-      )
+      path.join(dir, importTextWithoutExt + path.sep + kIndex + checkExt)
     );
     checkPromises.push(checkFn(filepath), checkFn(indexFilepath));
   });
@@ -101,9 +97,7 @@ export async function getImportTextWithExt(
   const isIndexFilepath = p0
     ? !importTextWithoutExt.endsWith(kIndex) && p0.endsWith(kIndex + p0Ext)
     : false;
-  const fEnding = isIndexFilepath
-    ? kPosixFolderSeparator + kIndex + toExt
-    : toExt;
+  const fEnding = isIndexFilepath ? path.sep + kIndex + toExt : toExt;
 
   return importTextWithoutExt + fEnding;
 }
@@ -130,14 +124,18 @@ async function addExtToRelativeImportsInFilepath(
       (ts.isExportDeclaration(node) || ts.isImportDeclaration(node)) &&
       node.moduleSpecifier &&
       ts.isStringLiteral(node.moduleSpecifier) &&
-      isRelativeImportText(getImportText(node.moduleSpecifier, sourceFile))
+      isRelativeImportOrExportSource(
+        getImportOrExportSource(node.moduleSpecifier, sourceFile)
+      )
     ) {
       importAndExportLiterals.push(node.moduleSpecifier);
     } else if (
       ts.isCallExpression(node) &&
       node.expression.getText(sourceFile) === kRequire &&
       node.arguments.length > 0 &&
-      isRelativeImportText(getImportText(node.arguments[0], sourceFile))
+      isRelativeImportOrExportSource(
+        getImportOrExportSource(node.arguments[0], sourceFile)
+      )
     ) {
       importAndExportLiterals.push(node.arguments[0]);
     }
@@ -152,10 +150,9 @@ async function addExtToRelativeImportsInFilepath(
   }
 
   const parsedFilepath = path.parse(filepath);
-  const replacementTextList: string[] = [];
-  await Promise.all(
+  const nodesAndReplacements = await Promise.all(
     importAndExportLiterals.map(async node => {
-      const originalImportText = getImportText(node, sourceFile);
+      const originalImportText = getImportOrExportSource(node, sourceFile);
       const changedImportText = await getImportTextWithExt(
         parsedFilepath.dir,
         originalImportText,
@@ -173,16 +170,13 @@ async function addExtToRelativeImportsInFilepath(
         replacementText = quotationType + changedImportText + quotationType;
       }
 
-      replacementTextList.push(replacementText);
+      return {node, replacementText};
     })
   );
 
   let workingText = sourceFile.getFullText();
   let workingOffset = 0;
-  importAndExportLiterals.forEach((node, index) => {
-    // assert(node.moduleSpecifier);
-    const replacementText = replacementTextList[index];
-
+  nodesAndReplacements.forEach(({node, replacementText}) => {
     if (replacementText) {
       ({modifiedText: workingText, newOffset: workingOffset} = replaceNodeText(
         workingText,
@@ -200,7 +194,7 @@ async function addExtToRelativeImportsInFilepath(
 
 export const addExtTraverseHandler: TraverseAndProcessFileHandler<
   [AddExtOpts]
-> = async (filepath: string, opts: AddExtOpts) => {
+> = async ({filepath, args: [opts]}) => {
   if (!isJSOrTSFilepath(filepath)) {
     return false;
   }
@@ -209,9 +203,9 @@ export const addExtTraverseHandler: TraverseAndProcessFileHandler<
 };
 
 export async function addExtCmd(folderpath: string, opts: AddExtOpts) {
-  await traverseAndProcessFilesInFolderpath(
+  await traverseAndProcessFilesInFolderpath({
     folderpath,
-    addExtTraverseHandler,
-    opts
-  );
+    handler: addExtTraverseHandler,
+    handlerArgs: [opts],
+  });
 }
