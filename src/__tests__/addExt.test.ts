@@ -10,12 +10,11 @@ import {
   kJSExtension,
   kMJSExtension,
   kMTSExtension,
-  kPosixFolderSeparator,
   kTSExtension,
-} from '../constants.js';
+} from '../utils/constants.js';
 
-const kTestLocalFsDir = './testdir';
-const testDir = path.join(kTestLocalFsDir + '/' + Date.now());
+const kTestLocalFsDir = '.' + path.sep + 'testdir';
+const testDir = path.join(kTestLocalFsDir + path.sep + Date.now());
 
 beforeEach(async () => {
   await ensureDir(testDir);
@@ -149,7 +148,7 @@ describe('getImportTextWithExt', () => {
     for (const importText of indexPathList) {
       const filepath = path.join(
         dir,
-        importText + kPosixFolderSeparator + kIndex + kTSExtension
+        importText + path.sep + kIndex + kTSExtension
       );
       await checkOnFilepath(
         importText,
@@ -157,10 +156,7 @@ describe('getImportTextWithExt', () => {
         /** fromExt */ undefined,
         /** toExt */ undefined,
         /** checkExt */ [kTSExtension],
-        /** expectedText */ importText +
-          kPosixFolderSeparator +
-          kIndex +
-          kJSExtension
+        /** expectedText */ importText + path.sep + kIndex + kJSExtension
       );
     }
 
@@ -229,7 +225,7 @@ const str: string = "str";
       ensureFile(importFromOuterFolderIndexFilepath),
     ]);
 
-    await addExtTraverseHandler(filepath, /** opts */ {});
+    await addExtTraverseHandler({filepath, args: [/** opts */ {}]});
 
     const actualCode = await readFile(filepath, 'utf-8');
     const expectedCode = `
@@ -285,7 +281,7 @@ const str: string = "str";
       ensureFile(importFromOuterFolderIndexFilepath),
     ]);
 
-    await addExtTraverseHandler(filepath, /** opts */ {});
+    await addExtTraverseHandler({filepath, args: [/** opts */ {}]});
 
     const actualCode = await readFile(filepath, 'utf-8');
     const expectedCode = `

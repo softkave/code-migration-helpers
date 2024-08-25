@@ -1,17 +1,18 @@
 import {rename} from 'fs/promises';
 import path from 'path';
-import {kDTSExtension} from './constants.js';
-import {TraverseAndProcessFileHandler} from './types.js';
 import {traverseAndProcessFilesInFolderpath} from './utils.js';
+import {kDTSExtension} from './utils/constants.js';
+import {TraverseAndProcessFileHandler} from './utils/types.js';
 
 export interface RenameExtOpts {
   from: string;
   to: string;
+  silent?: boolean;
 }
 
 export const renameExtTraverseHandler: TraverseAndProcessFileHandler<
   [RenameExtOpts]
-> = async (filepath: string, opts: RenameExtOpts) => {
+> = async ({filepath, args: [opts]}) => {
   if (!filepath.endsWith(opts.from) || filepath.endsWith(kDTSExtension)) {
     return false;
   }
@@ -27,9 +28,10 @@ export const renameExtTraverseHandler: TraverseAndProcessFileHandler<
 };
 
 export async function renameExtCmd(folderpath: string, opts: RenameExtOpts) {
-  await traverseAndProcessFilesInFolderpath(
+  await traverseAndProcessFilesInFolderpath({
     folderpath,
-    renameExtTraverseHandler,
-    opts
-  );
+    handler: renameExtTraverseHandler,
+    handlerArgs: [opts],
+    silent: opts.silent,
+  });
 }

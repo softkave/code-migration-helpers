@@ -1,6 +1,6 @@
 {
   "name": "code-migration-helpers",
-  "version": "0.5.4",
+  "version": "0.6.1",
   "description": "Provides useful (but currently not thorough) code migration helpers",
   "author": {
     "email": "ywordk@gmail.com",
@@ -28,44 +28,40 @@
   ],
   "scripts": {
     "test": "vitest --config ./vitest.config.ts",
-    "lint": "gts lint",
-    "clean": "gts clean",
-    "compile": "tsc && cp ./package.json ./build/package.json",
-    "clean-cjs-bin": "rm -rf ./cjs-bin",
-    "compile-cjs": "npm run clean-cjs-bin && npm run compile-cjs-bin && npm run cp-pkg-cjs-bin && npm run add-ext-cjs-bin && npm run rename-ext-cjs-bin",
-    "compile-cjs-bin": "tsc --project tsconfig-cjs.json",
-    "cp-pkg-cjs-bin": "cp ./package.json ./cjs-bin/package.json",
-    "add-ext-cjs-bin": "npm run start -- add-ext -f='./cjs-bin' --to='.cjs'",
-    "rename-ext-cjs-bin": "npm run start -- rename-ext -f='./cjs-bin' --from='.js' --to='.cjs'",
-    "start-cjs": "node ./cjs-bin/src/index.cjs",
     "clean-esm-bin": "rm -rf ./esm-bin",
-    "compile-esm": "npm run clean-esm-bin && npm run compile-esm-bin && npm run cp-pkg-esm-bin && npm run add-ext-esm-bin && npm run rename-ext-esm-bin",
     "compile-esm-bin": "tsc --project tsconfig-esm.json",
     "cp-pkg-esm-bin": "cp ./package.json ./esm-bin/package.json",
-    "add-ext-esm-bin": "npm run start-cjs -- add-ext -f='./esm-bin' --to='.mjs'",
-    "rename-ext-esm-bin": "npm run start-cjs -- rename-ext -f='./esm-bin' --from='.js' --to='.mjs'",
+    "add-ext-esm-bin": "npx --yes -- code-migration-helpers@latest add-ext -f='./esm-bin' --to='.mjs'",
+    "rename-ext-esm-bin": "npx --yes -- code-migration-helpers@latest rename-ext -f='./esm-bin' --from='.js' --to='.mjs'",
+    "compile-esm": "npm run clean-esm-bin && npm run compile-esm-bin && npm run cp-pkg-esm-bin && npm run add-ext-esm-bin && npm run rename-ext-esm-bin",
     "start-esm": "node ./esm-bin/src/index.mjs",
+    "lint": "gts lint",
     "fix": "gts fix",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile",
     "posttest": "npm run lint",
-    "start": "node ./build/src/index.js",
+    "compile": "npm run compile-esm",
+    "start": "npm run start-esm",
     "check-circular-deps": "npx dpdm --no-warning --no-tree ./src/index.ts",
-    "publish-to-npm": "npm run compile-esm && npm publish",
-    "show-packlist": "npm run compile-esm && npm pack --dry-run"
+    "publish-to-npm": "npm run compile && npm publish",
+    "publish-to-local": "npm run compile && yalc publish",
+    "show-packlist": "npm run compile && npm pack --dry-run"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
     "@types/fs-extra": "^11.0.4",
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "20.11.5",
     "gts": "^5.3.0",
     "vitest": "^1.5.3"
   },
   "dependencies": {
     "@isaacs/cliui": "^8.0.2",
+    "case": "^1.6.3",
     "fs-extra": "^11.2.0",
+    "lodash-es": "^4.17.21",
+    "softkave-js-utils": "^0.7.0",
     "type-fest": "^4.18.0",
     "typescript": "^5.4.5"
   }

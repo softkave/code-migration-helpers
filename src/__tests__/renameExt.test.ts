@@ -1,17 +1,21 @@
-import {ensureDir, ensureFile, pathExists, remove} from 'fs-extra/esm';
+import {faker} from '@faker-js/faker';
+import {ensureDir, ensureFile, pathExists} from 'fs-extra/esm';
+import {rm} from 'fs/promises';
+import {concat} from 'lodash-es';
 import path from 'path';
 import {afterEach, assert, beforeEach, describe, expect, test} from 'vitest';
+import {renameExtCmd, renameExtTraverseHandler} from '../renameExt.js';
+import {GenFileGenFn, genFiles} from '../testUtils/genFiles.js';
+import {genFolders} from '../testUtils/genFolders.js';
 import {
   kCJSExtension,
   kCTSExtension,
   kDTSExtension,
   kJSExtension,
   kTSExtension,
-} from '../constants.js';
-import {renameExtTraverseHandler} from '../renameExt.js';
+} from '../utils/constants.js';
 
-const kTestLocalFsDir = './testdir';
-const testDir = path.join(kTestLocalFsDir + '/' + Date.now());
+const testDir = '.' + path.sep + 'testdir/renameExt';
 
 beforeEach(async () => {
   await ensureDir(testDir);
@@ -19,7 +23,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   assert(testDir);
-  await remove(testDir);
+  await rm(testDir, {recursive: true, force: true});
 });
 
 describe('renameExt', () => {
@@ -34,13 +38,13 @@ describe('renameExt', () => {
     await Promise.all([ensureFile(paths.ts), ensureFile(paths.js)]);
 
     await Promise.all([
-      renameExtTraverseHandler(paths.ts, {
-        from: kTSExtension,
-        to: kCTSExtension,
+      renameExtTraverseHandler({
+        filepath: paths.ts,
+        args: [/** opts */ {from: kTSExtension, to: kCTSExtension}],
       }),
-      renameExtTraverseHandler(paths.js, {
-        from: kJSExtension,
-        to: kCJSExtension,
+      renameExtTraverseHandler({
+        filepath: paths.js,
+        args: [/** opts */ {from: kJSExtension, to: kCJSExtension}],
       }),
     ]);
 
@@ -58,19 +62,50 @@ describe('renameExt', () => {
 
   test('renameExtTraverseHandler not .js or .ts or .d.ts', async () => {
     const filename = Date.now();
-    const paths = {
-      dts: path.join(testDir, filename + kDTSExtension),
-    };
-    await Promise.all([ensureFile(paths.dts)]);
+    const paths = {dts: path.join(testDir, filename + kDTSExtension)};
+    await ensureFile(paths.dts);
 
-    await Promise.all([
-      renameExtTraverseHandler(paths.dts, {
-        from: kTSExtension,
-        to: kCJSExtension,
-      }),
-    ]);
+    await renameExtTraverseHandler({
+      filepath: paths.dts,
+      args: [/** opts */ {from: kTSExtension, to: kCJSExtension}],
+    });
 
     const [dtsExists] = await Promise.all([pathExists(paths.dts)]);
     expect(dtsExists).toBeTruthy();
+  });
+
+  test('deep traversal', async () => {
+    const count = 10;
+    const genFn: GenFileGenFn = () => ({
+      name: faker.number.int({min: 1}).toString() + '.js',
+      content: 'fimidara',
+    });
+    const folder01 = path.join(testDir, faker.number.int({min: 1}).toString());
+    const folderList02 = await genFolders([folder01], count);
+    const fileList02 = await genFiles([folder01], count, genFn);
+    const folderList03 = await genFolders(folderList02, count);
+    const fileList03 = await genFiles(folderList02, count, genFn);
+    // const folderList04 = await genFolders(folderList03, count);
+    const fileList04 = await genFiles(folderList03, count, genFn);
+
+    await renameExtCmd(folder01, {from: '.js', to: '.mjs', silent: true});
+
+    const fullFileList = concat(fileList02, fileList03, fileList04);
+    const [oldFilesExistList, newFilesExist] = await Promise.all([
+      Promise.all(fullFileList.map(f => pathExists(f))),
+      Promise.all(
+        fullFileList.map(f =>
+          pathExists(
+            path.join(path.dirname(f), path.basename(f, '.js')) + '.mjs'
+          )
+        )
+      ),
+    ]);
+
+    fullFileList.forEach((f, i) => {
+      const newF = path.join(path.dirname(f), path.basename(f, '.js')) + '.mjs';
+      expect(oldFilesExistList[i], `${f} not renamed`).toBeFalsy();
+      expect(newFilesExist[i], `${newF} does not exist`).toBeTruthy();
+    });
   });
 });

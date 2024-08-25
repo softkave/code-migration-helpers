@@ -1,0 +1,1 @@
+{"version":3,"file":"constants.js","sourceRoot":"","sources":["../../../src/addIndexFile/constants.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,sBAAsB,GAAG;IACpC,sBAAsB,EAAE,EAAE;IAC1B,wBAAwB,EAAE,CAAC,oCAAoC,CAAC;IAChE,wBAAwB,EAAE;QACxB,UAAU;QACV,WAAW;QACX,2CAA2C;QAC3C,2CAA2C;QAC3C,cAAc;KACf;CACF,CAAC"}

@@ -1,8 +1,8 @@
 import { rename } from 'fs/promises';
 import path from 'path';
-import { kDTSExtension } from './constants.mjs';
 import { traverseAndProcessFilesInFolderpath } from './utils.mjs';
-export const renameExtTraverseHandler = async (filepath, opts) => {
+import { kDTSExtension } from './utils/constants.mjs';
+export const renameExtTraverseHandler = async ({ filepath, args: [opts] }) => {
     if (!filepath.endsWith(opts.from) || filepath.endsWith(kDTSExtension)) {
         return false;
     }
@@ -15,6 +15,11 @@ export const renameExtTraverseHandler = async (filepath, opts) => {
     return true;
 };
 export async function renameExtCmd(folderpath, opts) {
-    await traverseAndProcessFilesInFolderpath(folderpath, renameExtTraverseHandler, opts);
+    await traverseAndProcessFilesInFolderpath({
+        folderpath,
+        handler: renameExtTraverseHandler,
+        handlerArgs: [opts],
+        silent: opts.silent,
+    });
 }
 //# sourceMappingURL=renameExt.js.map

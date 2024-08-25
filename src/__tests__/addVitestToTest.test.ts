@@ -4,7 +4,7 @@ import path from 'path';
 import {afterEach, assert, beforeEach, describe, expect, test} from 'vitest';
 import {addVitestToTestTraverseHandler} from '../addVitestToTests.js';
 
-const kTestLocalFsDir = './testdir';
+const kTestLocalFsDir = '.' + path.sep + 'testdir';
 const testDir = path.join(kTestLocalFsDir + '/' + Date.now());
 
 beforeEach(async () => {
@@ -46,7 +46,7 @@ describe('describe', () => {
     const filepath = path.join(testDir, Date.now() + '.test.ts');
     await writeFile(filepath, testCode, 'utf-8');
 
-    await addVitestToTestTraverseHandler(filepath);
+    await addVitestToTestTraverseHandler({filepath, args: []});
 
     const actualCode = await readFile(filepath, 'utf-8');
     const expectedCode = `

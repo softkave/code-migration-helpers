@@ -1,12 +1,10 @@
-import { createRequire as _createRequire } from "module";
-const __require = _createRequire(import.meta.url);
 import assert from 'assert';
 import { pathExists } from 'fs-extra';
 import { writeFile } from 'fs/promises';
 import path from 'path';
-import { kCJSExtension, kCTSExtension, kExtensions, kIndex, kJSExtension, kMJSExtension, kMTSExtension, kPosixFolderSeparator, kRequire, kTSExtension, } from './constants.mjs';
-import { getDirAndBasename, getImportText, isJSOrTSFilepath, isRelativeImportText, replaceNodeText, traverseAndProcessFilesInFolderpath, } from './utils.mjs';
-const ts = __require("typescript");
+import ts from 'typescript';
+import { getDirAndBasename, getImportOrExportSource, isJSOrTSFilepath, isRelativeImportOrExportSource, replaceNodeText, traverseAndProcessFilesInFolderpath, } from './utils.mjs';
+import { kCJSExtension, kCTSExtension, kDTSExtension, kExtensions, kIndex, kJSExtension, kMJSExtension, kMTSExtension, kRequire, kTSExtension, } from './utils/constants.mjs';
 export async function getImportTextWithExt(dir, originalImportText, fromExt, toExt, checkExts) {
     if (fromExt && !originalImportText.endsWith(fromExt)) {
         return undefined;
@@ -27,7 +25,7 @@ export async function getImportTextWithExt(dir, originalImportText, fromExt, toE
     const checkPromises = [];
     checkExts.forEach(checkExt => {
         const filepath = path.normalize(path.join(dir, importTextWithoutExt + checkExt));
-        const indexFilepath = path.normalize(path.join(dir, importTextWithoutExt + kPosixFolderSeparator + kIndex + checkExt));
+        const indexFilepath = path.normalize(path.join(dir, importTextWithoutExt + path.sep + kIndex + checkExt));
         checkPromises.push(checkFn(filepath), checkFn(indexFilepath));
     });
     const fPaths = await Promise.all(checkPromises);
@@ -55,9 +53,7 @@ export async function getImportTextWithExt(dir, originalImportText, fromExt, toE
     const isIndexFilepath = p0
         ? !importTextWithoutExt.endsWith(kIndex) && p0.endsWith(kIndex + p0Ext)
         : false;
-    const fEnding = isIndexFilepath
-        ? kPosixFolderSeparator + kIndex + toExt
-        : toExt;
+    const fEnding = isIndexFilepath ? path.sep + kIndex + toExt : toExt;
     return importTextWithoutExt + fEnding;
 }
 function determineQuoteTypeFromModuleSpecifier(sourceFile, node) {
@@ -72,13 +68,13 @@ async function addExtToRelativeImportsInFilepath(filepath, opts) {
         if ((ts.isExportDeclaration(node) || ts.isImportDeclaration(node)) &&
             node.moduleSpecifier &&
             ts.isStringLiteral(node.moduleSpecifier) &&
-            isRelativeImportText(getImportText(node.moduleSpecifier, sourceFile))) {
+            isRelativeImportOrExportSource(getImportOrExportSource(node.moduleSpecifier, sourceFile))) {
             importAndExportLiterals.push(node.moduleSpecifier);
         }
         else if (ts.isCallExpression(node) &&
             node.expression.getText(sourceFile) === kRequire &&
             node.arguments.length > 0 &&
-            isRelativeImportText(getImportText(node.arguments[0], sourceFile))) {
+            isRelativeImportOrExportSource(getImportOrExportSource(node.arguments[0], sourceFile))) {
             importAndExportLiterals.push(node.arguments[0]);
         }
         ts.forEachChild(node, checkNode);
@@ -88,22 +84,19 @@ async function addExtToRelativeImportsInFilepath(filepath, opts) {
         return false;
     }
     const parsedFilepath = path.parse(filepath);
-    const replacementTextList = [];
-    await Promise.all(importAndExportLiterals.map(async (node) => {
-        const originalImportText = getImportText(node, sourceFile);
+    const nodesAndReplacements = await Promise.all(importAndExportLiterals.map(async (node) => {
+        const originalImportText = getImportOrExportSource(node, sourceFile);
         const changedImportText = await getImportTextWithExt(parsedFilepath.dir, originalImportText, opts.from, opts.to, kExtensions);
         let replacementText = '';
         if (changedImportText) {
             const quotationType = determineQuoteTypeFromModuleSpecifier(sourceFile, node);
             replacementText = quotationType + changedImportText + quotationType;
         }
-        replacementTextList.push(replacementText);
+        return { node, replacementText };
     }));
     let workingText = sourceFile.getFullText();
     let workingOffset = 0;
-    importAndExportLiterals.forEach((node, index) => {
-        // assert(node.moduleSpecifier);
-        const replacementText = replacementTextList[index];
+    nodesAndReplacements.forEach(({ node, replacementText }) => {
         if (replacementText) {
             ({ modifiedText: workingText, newOffset: workingOffset } = replaceNodeText(workingText, sourceFile, node, replacementText, workingOffset));
         }
@@ -111,13 +104,17 @@ async function addExtToRelativeImportsInFilepath(filepath, opts) {
     await writeFile(filepath, workingText, 'utf-8');
     return true;
 }
-export const addExtTraverseHandler = async (filepath, opts) => {
-    if (!isJSOrTSFilepath(filepath)) {
+export const addExtTraverseHandler = async ({ filepath, args: [opts] }) => {
+    if (!isJSOrTSFilepath(filepath) || filepath.endsWith(kDTSExtension)) {
         return false;
     }
     return await addExtToRelativeImportsInFilepath(filepath, opts);
 };
 export async function addExtCmd(folderpath, opts) {
-    await traverseAndProcessFilesInFolderpath(folderpath, addExtTraverseHandler, opts);
+    await traverseAndProcessFilesInFolderpath({
+        folderpath,
+        handler: addExtTraverseHandler,
+        handlerArgs: [opts],
+    });
 }
 //# sourceMappingURL=addExt.js.map
