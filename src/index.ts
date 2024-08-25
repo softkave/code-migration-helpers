@@ -2,9 +2,7 @@
 
 import cliui from '@isaacs/cliui';
 import fsExtra from 'fs-extra';
-import path from 'path';
 import {addExtCmd} from './addExt.js';
-import {addIndexFileCmd} from './addIndexFile/addIndexFileCmd.js';
 import {addVitestToTestCmd} from './addVitestToTests.js';
 import {renameExtCmd} from './renameExt.js';
 import {renameFileCmd} from './renameFile.js';
@@ -58,17 +56,17 @@ async function main() {
     }
 
     case kProcessCmdType.addIndexFile: {
-      const folderpath = getRequiredArg({args, name: kCmdVars.folder});
-      const includeArg = getRequiredArg({args, name: kCmdVars.include});
-      const excludeArg = getRequiredArg({args, name: kCmdVars.exclude});
-      const absFolderpath = path.isAbsolute(folderpath)
-        ? folderpath
-        : path.join(process.cwd(), folderpath);
-      await addIndexFileCmd({
-        absFolderpath,
-        includeStrOrRegex: [includeArg],
-        excludeStrOrRegex: [excludeArg],
-      });
+      // const folderpath = getRequiredArg({args, name: kCmdVars.folder});
+      // const includeArg = getRequiredArg({args, name: kCmdVars.include});
+      // const excludeArg = getRequiredArg({args, name: kCmdVars.exclude});
+      // const absFolderpath = path.isAbsolute(folderpath)
+      //   ? folderpath
+      //   : path.join(process.cwd(), folderpath);
+      // await addIndexFileCmd({
+      //   absFolderpath,
+      //   includeStrOrRegex: [includeArg],
+      //   excludeStrOrRegex: [excludeArg],
+      // });
       break;
     }
 

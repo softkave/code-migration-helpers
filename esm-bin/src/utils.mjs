@@ -1,6 +1,6 @@
 import fsExtra from 'fs-extra';
 import path from 'path';
-import { kCaptureDirAndBasenameFromJSOrTSFilepathRegex, kJSOrTSFilepathRegex, kJSQuoteGlobalRegex, kJSRelativeImportRegex, } from './constants.mjs';
+import { kCaptureDirAndBasenameFromJSOrTSFilepathRegex, kJSOrTSFilepathRegex, kJSQuoteGlobalRegex, kJSRelativeImportOrExportSourceRegex, } from './utils/constants.mjs';
 export function isJSOrTSFilepath(filepath) {
     return kJSOrTSFilepathRegex.test(filepath);
 }
@@ -12,16 +12,22 @@ export function getDirAndBasename(filepath) {
     }
     return undefined;
 }
-export async function traverseAndProcessFilesInFolderpath(folderpath, handleFile, ...args) {
+export async function traverseAndProcessFilesInFolderpath(props) {
+    const { folderpath, handler: handleFile, handlerArgs, silent } = props;
     const stat = await fsExtra.stat(folderpath);
     let filepathList = [];
     const folderpathList = [];
     const kIterationMax = 20;
     async function internalHandleFile(filepath) {
         try {
-            const isModified = await handleFile(filepath, ...args);
-            if (isModified) {
-                console.log(`modified ${filepath}`);
+            const isModifiedOrMsg = await handleFile({ filepath, args: handlerArgs });
+            if (!silent) {
+                if (typeof isModifiedOrMsg === 'boolean' && isModifiedOrMsg) {
+                    console.log(`modified ${filepath}`);
+                }
+                else if (typeof isModifiedOrMsg === 'string') {
+                    console.log(isModifiedOrMsg);
+                }
             }
         }
         catch (error) {
@@ -68,13 +74,16 @@ export async function traverseAndProcessFilesInFolderpath(folderpath, handleFile
         filepathList.push(folderpath);
     }
     while (folderpathList.length || filepathList.length) {
-        await Promise.all([processQueuedFiles(), processNextFolderpath()]);
+        // Some commands like `addIndexFile` relies on a folder's files being
+        // processed before children folders are processed
+        await processQueuedFiles();
+        await processNextFolderpath();
     }
 }
-export function isRelativeImportText(text) {
-    return kJSRelativeImportRegex.test(text);
+export function isRelativeImportOrExportSource(text) {
+    return kJSRelativeImportOrExportSourceRegex.test(text);
 }
-export function getImportText(node, sourceFile) {
+export function getImportOrExportSource(node, sourceFile) {
     return node.getText(sourceFile).replaceAll(kJSQuoteGlobalRegex, '');
 }
 export function replaceNodeText(text, sourceFile, node, replacementText, offset) {

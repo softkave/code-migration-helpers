@@ -1,6 +1,5 @@
 import {faker} from '@faker-js/faker';
-import {writeFile} from 'fs-extra';
-import {ensureFile} from 'fs-extra/esm';
+import {ensureFile, writeFile} from 'fs-extra';
 import path from 'path';
 import {expect} from 'vitest';
 import {

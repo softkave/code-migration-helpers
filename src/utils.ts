@@ -29,8 +29,9 @@ export async function traverseAndProcessFilesInFolderpath<
   folderpath: string;
   handler: TraverseAndProcessFileHandler<TArgs>;
   handlerArgs: TArgs;
+  silent?: boolean;
 }) {
-  const {folderpath, handler: handleFile, handlerArgs} = props;
+  const {folderpath, handler: handleFile, handlerArgs, silent} = props;
 
   const stat = await fsExtra.stat(folderpath);
   let filepathList: string[] = [];
@@ -41,10 +42,12 @@ export async function traverseAndProcessFilesInFolderpath<
     try {
       const isModifiedOrMsg = await handleFile({filepath, args: handlerArgs});
 
-      if (typeof isModifiedOrMsg === 'boolean' && isModifiedOrMsg) {
-        console.log(`modified ${filepath}`);
-      } else if (typeof isModifiedOrMsg === 'string') {
-        console.log(isModifiedOrMsg);
+      if (!silent) {
+        if (typeof isModifiedOrMsg === 'boolean' && isModifiedOrMsg) {
+          console.log(`modified ${filepath}`);
+        } else if (typeof isModifiedOrMsg === 'string') {
+          console.log(isModifiedOrMsg);
+        }
       }
     } catch (error) {
       console.log(`error ${filepath}`);

@@ -1,6 +1,6 @@
+import cliui from '@isaacs/cliui';
 import assert from 'assert';
 import {ParsedCLIArgs} from '../types.js';
-import cliui = require('@isaacs/cliui');
 
 export function parseCLIArgs(input: string | string[]) {
   const strList = Array.isArray(input)

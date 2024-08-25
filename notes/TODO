@@ -8,6 +8,9 @@
 # Add `vitest` to tests
 
 - how to handle existing imports from "node:test" or other imports
+- add vitest to package.json
+- vi.mock module should import
+- should generate vitest config
 
 # Add index file
 

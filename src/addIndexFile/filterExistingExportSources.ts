@@ -16,13 +16,9 @@ import {IAddIndexFileFolderpathEntries} from './types.js';
 export async function filterExistingExportSources(
   sourceFile: ts.SourceFile,
   entries: RequiredDeep<IAddIndexFileFolderpathEntries>
-) {
-  const {exportLiterals, exportNodes} = getExports(sourceFile);
-  const newExportEntries = entries.entries.filter(entry => {
-    const match = !exportLiterals.has(entry.importSrc);
-    exportLiterals.add(entry.importSrc);
-    return match;
-  });
+): Promise<{newExportEntries: typeof entries.entries; exportNodes: ts.Node[]}> {
+  const {exportNodes} = getExports(sourceFile);
+  const newExportEntries: typeof entries.entries = [];
 
-  return {exportLiterals, newExportEntries, exportNodes};
+  return {newExportEntries, exportNodes};
 }

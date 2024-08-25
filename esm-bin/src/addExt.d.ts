@@ -1,4 +1,4 @@
-import { TraverseAndProcessFileHandler } from './types.js';
+import { TraverseAndProcessFileHandler } from './utils/types.js';
 export interface AddExtOpts {
     from?: string;
     to?: string;

@@ -1,10 +1,8 @@
-import { createRequire as _createRequire } from "module";
-const __require = _createRequire(import.meta.url);
 import assert from 'assert';
 import { writeFile } from 'fs/promises';
-import { kExpectedTestConstructs, kJest, kNewline, kVi, kVitest, } from './constants.mjs';
-import { countCharacters, getImportText, isJSOrTSFilepath, isRelativeImportText, replaceNodeText, traverseAndProcessFilesInFolderpath, } from './utils.mjs';
-const ts = __require("typescript");
+import ts from 'typescript';
+import { countCharacters, getImportOrExportSource, isJSOrTSFilepath, isRelativeImportOrExportSource, replaceNodeText, traverseAndProcessFilesInFolderpath, } from './utils.mjs';
+import { kExpectedTestConstructs, kJest, kNewline, kVi, kVitest, } from './utils/constants.mjs';
 function markContainedTestConstructs(sourceFile, node, importVitestConstructs) {
     if (ts.isIdentifier(node)) {
         const foundTestConstruct = kExpectedTestConstructs.find(text => {
@@ -32,7 +30,7 @@ function getLastNonRelativeImportOrExportNode(sourceFile) {
         if ((ts.isExportDeclaration(node) || ts.isImportDeclaration(node)) &&
             node.moduleSpecifier &&
             ts.isStringLiteral(node.moduleSpecifier) &&
-            !isRelativeImportText(getImportText(node.moduleSpecifier, sourceFile))) {
+            !isRelativeImportOrExportSource(getImportOrExportSource(node.moduleSpecifier, sourceFile))) {
             lastNonRelativeImportNode = node;
             return true;
         }
@@ -89,7 +87,7 @@ function containsVitestImport(sourceFile) {
         if (ts.isImportDeclaration(node) &&
             node.moduleSpecifier &&
             ts.isStringLiteral(node.moduleSpecifier) &&
-            getImportText(node.moduleSpecifier, sourceFile) === kVitest) {
+            getImportOrExportSource(node.moduleSpecifier, sourceFile) === kVitest) {
             hasVitestImport = true;
             return true;
         }
@@ -154,13 +152,17 @@ async function addVitestToTestInFilepath(filepath) {
     await writeFile(filepath, modifiedText);
     return true;
 }
-export const addVitestToTestTraverseHandler = async (filepath) => {
+export const addVitestToTestTraverseHandler = async ({ filepath }) => {
     if (isJSOrTSFilepath(filepath)) {
         return await addVitestToTestInFilepath(filepath);
     }
     return false;
 };
 export async function addVitestToTestCmd(folderpath) {
-    await traverseAndProcessFilesInFolderpath(folderpath, addVitestToTestTraverseHandler);
+    await traverseAndProcessFilesInFolderpath({
+        folderpath,
+        handler: addVitestToTestTraverseHandler,
+        handlerArgs: [],
+    });
 }
 //# sourceMappingURL=addVitestToTests.js.map

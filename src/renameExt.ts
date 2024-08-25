@@ -7,6 +7,7 @@ import {TraverseAndProcessFileHandler} from './utils/types.js';
 export interface RenameExtOpts {
   from: string;
   to: string;
+  silent?: boolean;
 }
 
 export const renameExtTraverseHandler: TraverseAndProcessFileHandler<
@@ -31,5 +32,6 @@ export async function renameExtCmd(folderpath: string, opts: RenameExtOpts) {
     folderpath,
     handler: renameExtTraverseHandler,
     handlerArgs: [opts],
+    silent: opts.silent,
   });
 }

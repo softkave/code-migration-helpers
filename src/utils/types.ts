@@ -3,7 +3,7 @@ import {ValueOf} from 'type-fest';
 export type TraverseAndProcessFileHandler<TArgs extends unknown[]> = (props: {
   filepath: string;
   args: TArgs;
-}) => Promise<boolean | string>;
+}) => Promise<boolean | string> | boolean | string | void;
 
 export const kProcessCmdType = {
   addExtToImports: 'add-ext',

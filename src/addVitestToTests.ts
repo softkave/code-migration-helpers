@@ -1,5 +1,6 @@
 import assert from 'assert';
 import {writeFile} from 'fs/promises';
+import ts from 'typescript';
 import {
   countCharacters,
   getImportOrExportSource,
@@ -16,7 +17,6 @@ import {
   kVitest,
 } from './utils/constants.js';
 import {TraverseAndProcessFileHandler} from './utils/types.js';
-import ts = require('typescript');
 
 interface TrackedModification {
   node: ts.Node;

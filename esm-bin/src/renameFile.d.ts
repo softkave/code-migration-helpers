@@ -1,4 +1,4 @@
-import { TraverseAndProcessFileHandler } from './types.js';
+import { TraverseAndProcessFileHandler } from './utils/types.js';
 export interface IRenameFileOpts {
     asks: Array<{
         from: string;

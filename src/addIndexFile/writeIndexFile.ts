@@ -1,4 +1,4 @@
-import fsExtra from 'fs-extra/esm';
+import fsExtra from 'fs-extra';
 import {appendFile} from 'fs/promises';
 import path from 'path';
 import {

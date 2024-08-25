@@ -2,6 +2,7 @@ import assert from 'assert';
 import {pathExists} from 'fs-extra';
 import {writeFile} from 'fs/promises';
 import path from 'path';
+import ts from 'typescript';
 import {
   getDirAndBasename,
   getImportOrExportSource,
@@ -13,6 +14,7 @@ import {
 import {
   kCJSExtension,
   kCTSExtension,
+  kDTSExtension,
   kExtensions,
   kIndex,
   kJSExtension,
@@ -22,7 +24,6 @@ import {
   kTSExtension,
 } from './utils/constants.js';
 import {TraverseAndProcessFileHandler} from './utils/types.js';
-import ts = require('typescript');
 
 export interface AddExtOpts {
   from?: string;
@@ -195,7 +196,7 @@ async function addExtToRelativeImportsInFilepath(
 export const addExtTraverseHandler: TraverseAndProcessFileHandler<
   [AddExtOpts]
 > = async ({filepath, args: [opts]}) => {
-  if (!isJSOrTSFilepath(filepath)) {
+  if (!isJSOrTSFilepath(filepath) || filepath.endsWith(kDTSExtension)) {
     return false;
   }
 

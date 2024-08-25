@@ -1,0 +1,1 @@
+{"version":3,"file":"getSourceFile.js","sourceRoot":"","sources":["../../../src/utils/getSourceFile.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,YAAY,CAAC;AAE5B,MAAM,UAAU,aAAa,CAAC,QAAgB;IAC5C,MAAM,OAAO,GAAG,EAAE,CAAC,aAAa,CAAC,CAAC,QAAQ,CAAC,EAAE,EAAC,OAAO,EAAE,IAAI,EAAC,CAAC,CAAC;IAC9D,OAAO,OAAO,CAAC,aAAa,CAAC,QAAQ,CAAC,CAAC;AACzC,CAAC"}

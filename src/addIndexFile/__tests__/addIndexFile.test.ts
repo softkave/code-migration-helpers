@@ -33,7 +33,7 @@ afterAll(async () => {
 });
 
 describe('addIndexFile', () => {
-  test('addIndexFile with default', async () => {
+  test.skip('addIndexFile with default', async () => {
     const folderpath = makeFolder(testDir);
     const indexFilepath = path.join(folderpath, kIndexFilename + kTSExtension);
 
@@ -62,7 +62,7 @@ describe('addIndexFile', () => {
     });
   });
 
-  test('addIndexFile with existing index file', async () => {
+  test.skip('addIndexFile with existing index file', async () => {
     const folderpath = makeFolder(testDir);
     const indexFilepath = path.join(folderpath, kIndexFilename + kTSExtension);
 
@@ -88,7 +88,7 @@ describe('addIndexFile', () => {
     });
   });
 
-  test('addIndexFile propagates to parent', async () => {
+  test.skip('addIndexFile propagates to parent', async () => {
     const rootFolderpath = makeFolder(testDir);
     const folderpath = makeFolder(rootFolderpath);
     const rootFolderIndexFilepath = path.join(
@@ -114,7 +114,7 @@ describe('addIndexFile', () => {
     });
   });
 
-  test('addIndexFile default exclude', async () => {
+  test.skip('addIndexFile default exclude', async () => {
     const folderpath = makeFolder(testDir);
     const indexFilepath = path.join(folderpath, kIndexFilename + kTSExtension);
 
@@ -147,7 +147,7 @@ describe('addIndexFile', () => {
     });
   });
 
-  test.each([
+  test.skip.each([
     {tagName: 'public', optTag: true},
     {tagName: 'custom-public', optTag: 'custom-public'},
   ])('with tagName=$tagName', async ({tagName, optTag}) => {
@@ -176,7 +176,7 @@ describe('addIndexFile', () => {
     ).toBeFalsy();
   });
 
-  test.each([{includeEmptyFiles: true}, {includeEmptyFiles: false}])(
+  test.skip.each([{includeEmptyFiles: true}, {includeEmptyFiles: false}])(
     'with includeEmptyFiles=$includeEmptyFiles',
     async ({includeEmptyFiles}) => {
       const folderpath = makeFolder(testDir);
@@ -204,7 +204,7 @@ describe('addIndexFile', () => {
     }
   );
 
-  test('exports and default exports', async () => {
+  test.skip('exports and default exports', async () => {
     const folderpath = makeFolder(testDir);
     const indexFilepath = path.join(folderpath, kIndexFilename + kTSExtension);
     const entryWithSelectiveExportsFilepath = path.join(

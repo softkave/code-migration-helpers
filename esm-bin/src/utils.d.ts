@@ -1,11 +1,12 @@
 import ts from 'typescript';
-import { TraverseAndProcessFileHandler } from './types.js';
+import { TraverseAndProcessFileHandler } from './utils/types.js';
 export declare function isJSOrTSFilepath(filepath: string): boolean;
 export declare function getDirAndBasename(filepath: string): string | undefined;
 export declare function traverseAndProcessFilesInFolderpath<TArgs extends unknown[]>(props: {
     folderpath: string;
     handler: TraverseAndProcessFileHandler<TArgs>;
     handlerArgs: TArgs;
+    silent?: boolean;
 }): Promise<void>;
 export declare function isRelativeImportOrExportSource(text: string): boolean;
 export declare function getImportOrExportSource(node: ts.Node, sourceFile: ts.SourceFile): string;
